@@ -1,0 +1,22 @@
+{
+  "name": "fyp-app",
+  "version": "1.0.0",
+  "description": "Whisper messaging service enabled through Web3 framework",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sean Durban",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "cookie-parser": "^1.4.3",
+    "ejs": "^2.5.7",
+    "express": "^4.16.2",
+    "http": "0.0.0",
+    "morgan": "^1.9.0",
+    "path": "^0.12.7",
+    "web3": "^1.0.0-beta.30"
+  }
+}
