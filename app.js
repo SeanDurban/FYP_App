@@ -5,7 +5,12 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 var index = require('./routes/index');
+var sessionRoute = require('./routes/session');
+
 var http = require("http");
+var flash = require('connect-flash');
+var session = require('express-session');
+
 var app = express();
 
 // view engine setup
@@ -17,10 +22,19 @@ app.set('view engine', 'ejs');
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+//Session storage
+app.use(cookieParser('secret'));
+app.use(session({ secret: 'secret',
+resave: true,
+saveUninitialized: true
+}));
+app.use(flash());
+
 
 app.use('/', index);
+app.use('/session', sessionRoute);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -45,11 +59,5 @@ var httpServer = http.createServer(app);
 httpServer.listen(4000, function() {
   console.log("Server listening on port 4000");
 });
-
-// //Web3 setup
-// var Web3 = require('web3');
-// var web3 = new Web3(
-// 	new Web3.providers.WebsocketProvider('ws://localhost:8546')
-// );
 
 module.exports = app;

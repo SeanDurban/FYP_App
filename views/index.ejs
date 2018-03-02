@@ -3,92 +3,37 @@
   <head>
     <title>Whisper App</title>
     <link rel='stylesheet' href='/stylesheets/style.css' />
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-  </head>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous" />
+	  </head>
   <body class="container">
 		<h2>Whisper App</h2>
-					<a href="#contactModal" class="btn btn-info btn-sm" data-toggle="modal">Add Contact</a>
-				<form action="/subscribe" method="post" id='groupForm'>
+				<br>
+				<a href="#contactModal" class="btn btn-info btn-sm" data-toggle="modal">Add Contact</a>
+
+				<form action="/createGroup" method="post" id='initForm'>
+					<br>
+					<h5>Create new group</h5>
 					<div class="form-row">
 						<div class="form-group col-md-6">
-							<label for="inputTopic">Topic</label>
-							<input type="text" class="form-control" name="inputTopic" value=""/>
+							<label for="groupName">Group Name</label>
+							<input type="text" class="form-control" name="groupName" value=""/>
 						</div>
 					</div>
-
-					<div class="form-row">
-						<div class="form-group col-md-6">
-							<label for="inputSessionP">Session Password</label>
-							<input type="text" class="form-control" name="inputSessionP" value=""/>
-						</div>
-					</div>
-					<button type="submit" class="btn btn-primary btn-sm">Subscribe</button>
-				</form>
-
-				<form action="/postContact" method="post" id='groupForm'>
-
-					<div class="form-row">
-						<div class="form-group col-md-6">
-							<label for="inputTopic">Topic</label>
-							<input type="text" class="form-control" name="inputTopic" value=""/>
-						</div>
-					</div>
-
-					<div class="form-row">
-						<div class="form-group col-md-6">
-							<label for="inputSessionP">Contact Name</label>
-							<input type="text" class="form-control" name="inputContact" value=""/>
-						</div>
-					</div>
-
-					<div class="form-row">
-						<div class="form-group col-md-6">
-							<label for="inputMessage">Message</label>
-							<textarea type="text" class="form-control" name="inputMessage" value=""/> </textarea>
-						</div>
-					</div>
-
-					<button type="submit" class="btn btn-primary btn-sm">Post</button>
+					<button type="submit" class="btn btn-info btn-sm">Create</button>
 				</form> <br>
 
-				<form action="/post" method="post" id='groupForm'>
-
-					<div class="form-row">
-						<div class="form-group col-md-6">
-							<label for="inputTopic">Topic</label>
-							<input type="text" class="form-control" name="inputTopic" value=""/>
-						</div>
-					</div>
-
-					<div class="form-row">
-						<div class="form-group col-md-6">
-							<label for="inputSessionP">Session Password</label>
-							<input type="text" class="form-control" name="inputSessionP" value=""/>
-						</div>
-					</div>
-
-					<div class="form-row">
-						<div class="form-group col-md-6">
-							<label for="inputMessage">Message</label>
-							<textarea type="text" class="form-control" name="inputMessage" value=""/> </textarea>
-						</div>
-					</div>
-
-					<button type="submit" class="btn btn-primary btn-sm">Post</button>
-				</form>
-
 				<br><br>
-				<h5>Topics subscribed to </h5>
+				<h5>Active Groups</h5>
 				<div class="row">
-					<%if(sessionStorage && sessionStorage.length>0) { %>
-						<% for(let session of sessionStorage) {%>
-							<p><%=session.topic%></p>
-							<br> <br>
+					<%if(groupChannels && groupChannels.size>0) { %>
+						<% for(let topic of groupChannels.keys()) {%>
+							<a href='session/<%=topic%>' target="_blank"><%=topic%></a>
+							<br>
 					<%	}%>
 					<% } %>
 				</div>
 				<br>
-				<h5>Messages Received</h5>
+				<h5>All Messages Received</h5>
 					<%if(messageStorage && messageStorage.length>0) { %>
 						<% for(let message of messageStorage) {%>
 							<div class="row">

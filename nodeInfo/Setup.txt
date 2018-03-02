@@ -1,0 +1,20 @@
+Add Contact:
+{name, pubKey, Tinit}
+
+Listen on startup for base identity:
+Tinit, PrivKey
+
+Create session button:
+Choose contacts for each:
+	Generate session data (Key, Topic) for each contact
+	Post to contact(s)
+
+Session Buttons:
+ Session screen with messages
+
+Handle session init on receiver.
+  Receive init
+	Initialise the session
+	Store new topic, key
+	Listen on new topic
+

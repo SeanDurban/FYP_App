@@ -5,7 +5,12 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 var index = require('./routes/index');
+var sessionRoute = require('./routes/session');
+
 var http = require("http");
+var flash = require('connect-flash');
+var session = require('express-session');
+
 var app = express();
 
 // view engine setup
@@ -17,39 +22,42 @@ app.set('view engine', 'ejs');
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+//Session storage
+app.use(cookieParser('secret2'));
+app.use(session({ secret: 'secret2',
+    resave: true,
+    saveUninitialized: true
+}));
+app.use(flash());
+
 
 app.use('/', index);
+app.use('/session', sessionRoute);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
+    var err = new Error('Not Found');
+    err.status = 404;
+    next(err);
 });
 
 // error handler
 app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+    // set locals, only providing error in development
+    res.locals.message = err.message;
+    res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+    // render the error page
+    res.status(err.status || 500);
+    res.render('error');
 });
 
 //Create Server and listen on port 3000
 var httpServer = http.createServer(app);
 httpServer.listen(5000, function() {
-  console.log("Server listening on port 5000");
+    console.log("Server listening on port 5000");
 });
-
-// //Web3 setup
-// var Web3 = require('web3');
-// var web3 = new Web3(
-// 	new Web3.providers.WebsocketProvider('ws://localhost:8546')
-// );
 
 module.exports = app;
