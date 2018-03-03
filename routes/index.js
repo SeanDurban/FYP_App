@@ -26,7 +26,7 @@ router.get('/', function(req, res, next) {
 		});
 	}
 	console.log(groupChannels);
-  	res.render('index', {messageStorage, groupChannels});
+  	res.render('index', {messageStorage, groupChannels, contacts});
 });
 
 router.post('/contact', (req, res) => {
@@ -39,7 +39,7 @@ router.post('/contact', (req, res) => {
 
 router.post('/createGroup', (req,res) => {
 	//This will be changed to input as multiselect
-	var contactsGiven = ['node #2'];
+	var contactsGiven = req.body.contactSelect
 	var name=req.body.groupName;
 	var nodeNo = 0;  //Group controller nodeNo always 0
 	generateSessionData(contacts.length+1, (topics, sessionK) => {

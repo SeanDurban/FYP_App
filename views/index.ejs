@@ -2,27 +2,16 @@
 <html>
   <head>
     <title>Whisper App</title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous" />
-	  </head>
+    <link rel='stylesheet' src='/public/css/style.css'/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous" />
+  </head>
   <body class="container">
 		<h2>Whisper App</h2>
 				<br>
 				<a href="#contactModal" class="btn btn-info btn-sm" data-toggle="modal">Add Contact</a>
-
-				<form action="/createGroup" method="post" id='initForm'>
-					<br>
-					<h5>Create new group</h5>
-					<div class="form-row">
-						<div class="form-group col-md-6">
-							<label for="groupName">Group Name</label>
-							<input type="text" class="form-control" name="groupName" value=""/>
-						</div>
-					</div>
-					<button type="submit" class="btn btn-info btn-sm">Create</button>
-				</form> <br>
-
 				<br><br>
+                <a href="#createGroupModal" class="btn btn-info btn-sm" data-toggle="modal">Create Group</a>
+                <br><br>
 				<h5>Active Groups</h5>
 				<div class="row">
 					<%if(groupChannels && groupChannels.size>0) { %>
@@ -72,13 +61,48 @@
 							</div>
 						</div>
 					</div>
-
+		<div id="createGroupModal" class="modal fade">
+			<div class="modal-dialog modal-confirm">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h4 class="modal-title">Create New Group</h4>
+						<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+					</div>
+					<div class="modal-body">
+						<form action="/createGroup" method="post" id='initForm'>
+							<div class="form-row">
+								<div class="form-group col-md-6">
+									<label for="groupName">Group Name</label>
+									<input type="text" class="form-control" name="groupName" value=""/>
+								</div>
+							</div>
+							<div class="form-row">
+								<div class="form-group col-md-6">
+									<label for="contactSelect">Group Name</label>
+                                    <select id="contactSelect" multiple="multiple" name="contactSelect">
+                                        <%if(contacts) { %>
+                                        <% for(let contact of contacts.keys()) {%>
+										<%if(contact != 'Me'){%>
+                                        <option value="<%= contact %>"><%= contact %></option>
+                                        <% } } } %>
+                                    </select>
+								</div>
+							</div>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+						<button type="submit" class="btn btn-info">Create</button>
+					</div>
+					</form>
+				</div>
+			</div>
+		</div>
 
   </body>
 </html>
 <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js" type="text/javascript"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
 <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js" type="text/javascript"></script>
 <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="Stylesheet" type="text/css" />
