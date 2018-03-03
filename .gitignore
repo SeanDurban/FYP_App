@@ -58,7 +58,7 @@ typings/
 .env
 
 # Node info
-./nodeInfo
+nodeInfo/
 
 # Webstorm Config
 .idea/
