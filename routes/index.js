@@ -39,19 +39,21 @@ router.post('/contact', (req, res) => {
 
 router.post('/createGroup', (req,res) => {
 	//This will be changed to input as multiselect
-	var contactsGiven = req.body.contactSelect
-	var name=req.body.groupName;
-	var nodeNo = 0;  //Group controller nodeNo always 0
-	generateSessionData(contacts.length+1, (topics, sessionK) => {
-		sendInit(topics, contactsGiven, sessionK, name);
-		var sessionData = {topics:topics, sessionK:sessionK, nodeNo:nodeNo, messages:[], name:name};
-		subscribeWithKey(topics[nodeNo], sessionK);
-		groupChannels.set(topics[nodeNo], sessionData);
-		global.groupChannels = groupChannels;
-		console.log('Created new Group', name);
-		res.redirect('/');
-	});
-
+	var contactsGiven = req.body.contactSelect;
+	if(contactsGiven) {
+		contactsGiven= (contactsGiven.constructor == Array)? contactsGiven:[contactsGiven];
+        var name = req.body.groupName;
+        var nodeNo = 0;  //Group controller nodeNo always 0
+        generateSessionData(contacts.length + 1, (topics, sessionK) => {
+            sendInit(topics, contactsGiven, sessionK, name);
+            var sessionData = {topics: topics, sessionK: sessionK, nodeNo: nodeNo, messages: [], name: name, seqNo: 0};
+            subscribeWithKey(topics[nodeNo], sessionK);
+            groupChannels.set(topics[nodeNo], sessionData);
+            global.groupChannels = groupChannels;
+            console.log('Created new Group', name);
+            res.redirect('/');
+        });
+    }
 });
 
 router.post('/post', (req, res) => {
@@ -74,12 +76,15 @@ function subscribeWithKey(topic, key){
 				})
 				.on('data', res => {
 					console.log('New message received');
-					var msg = web3.utils.hexToAscii(res.payload);
-					messageStorage.push('Message from topic ( '+ res.topic + ' ): '+msg);
+					let payload = web3.utils.hexToAscii(res.payload).split('||');
+					let seqNo = payload[0];
+					let message = payload[1];
+					messageStorage.push('Message from topic ( '+ res.topic + ' ): '+message);
 					//update global groupChannels map
 					let groupChannel = groupChannels.get(topic);
 					if(groupChannel){
-						groupChannel.messages.push(msg);
+						groupChannel.messages.push(message);
+						groupChannel.seqNo++;
 						groupChannels.set(topic, groupChannel);
 						console.log('Updated Group Channels map');
                         global.groupChannels = groupChannels;
@@ -131,7 +136,7 @@ function post(topic, keyID, message) {
 function postWithPK(topic, pK, message) {
 	web3.shh.post(
 			{
-				pubKey: pK, // encrypts using the sym key ID
+				pubKey: pK, // encrypts using the public key
 				ttl: 20,
 				topic: topic,
 				payload: web3.utils.asciiToHex(message),
@@ -174,11 +179,13 @@ function getNewKeys(callback){
 //Send initialise message to all group members
 //Message includes all details required to participate in group channel
 function sendInit(topics, groupContacts, sessionK, name){
+	let nodeNo = 1;
 	for(var contact of groupContacts) {
 		var contactInfo = contacts.get(contact);
 		if(contactInfo){
-			var initMessage = `INIT||${name}||1||${topics}||${sessionK}`;
-			postWithPK(contactInfo.topic, contactInfo.pubKey, initMessage);
+			var initMessage = `INIT||${name}||${nodeNo}||${topics}||${sessionK}`;
+			postWithPK(contactInfo.topic, contactInfo.pubKey, initMessage)
+			nodeNo++;
 		}
 	}
 }
@@ -191,7 +198,7 @@ function setupSession(message){
 	var topics = message[3].split(',');
 	var sessionK = message[4];
 	subscribeWithKey(topics[nodeNo], sessionK);
-	var sessionData = {topics:topics, sessionK:sessionK, nodeNo:nodeNo, messages:[], name: groupName};
+	var sessionData = {topics:topics, sessionK:sessionK, nodeNo:nodeNo, messages:[], name: groupName, seqNo:0};
 	groupChannels.set(topics[nodeNo], sessionData);
 	global.groupChannels = groupChannels;
 }

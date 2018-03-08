@@ -79,7 +79,7 @@
 							<div class="form-row">
 								<div class="form-group col-md-6">
 									<label for="contactSelect">Group Name</label>
-                                    <select id="contactSelect" multiple="multiple" name="contactSelect">
+                                    <select id="contactSelect" multiple="multiple" name="contactSelect" required>
                                         <%if(contacts) { %>
                                         <% for(let contact of contacts.keys()) {%>
 										<%if(contact != 'Me'){%>

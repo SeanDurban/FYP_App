@@ -16,16 +16,21 @@ router.get('/:topic', function(req, res, next) {
 });
 
 router.post('/:topic', (req, res) => {
-	var message = req.body.inputMessage;
+	var inputMessage = req.body.inputMessage;
     let nodeTopic= req.params.topic;
     let groupChannel = global.groupChannels.get(nodeTopic);
     let sessionK = groupChannel.sessionK;
     web3.shh.addSymKey(sessionK, (err, id) => {
     	for(let topic of groupChannel.topics) {
+    		let message = groupChannel.seqNo + '||' + inputMessage;
             post(topic, id, message);
         }
+        groupChannel.seqNo++;
+        //This could be possible race condition site
+        global.groupChannels.set(nodeTopic,groupChannel);
 		res.redirect('/session/'+nodeTopic);
 	});
+
 });
 
 function post(topic, keyID, message) {
