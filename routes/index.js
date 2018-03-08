@@ -13,7 +13,8 @@ const testTopic = '0xffddaa11';
 var appKeyId;
 var contacts = new Map();
 var groupChannels = new Map();
-var groupChannelName= '';
+const INIT_TIMEOUT = 25000;  //25 seconds
+const SESSION_TIMEOUT = 18000; //18 seconds
 
 router.get('/', function(req, res, next) {
 	if(!appKeyId){
@@ -46,10 +47,12 @@ router.post('/createGroup', (req,res) => {
         generateSessionData(contactsGiven.length + 1, (topics, sessionK) => {
             sendInit(topics, contactsGiven, sessionK, name);
             var sessionData = {topics: topics, sessionK: sessionK, nodeNo: nodeNo, messages: [], name: name, seqNo: 0};
-            subscribeWithKey(topics[nodeNo], sessionK);
-            groupChannels.set(topics[nodeNo], sessionData);
+            let nodeTopic = topics[nodeNo];
+            subscribeWithKey(nodeTopic, sessionK);
+            groupChannels.set(nodeTopic, sessionData);
             global.groupChannels = groupChannels;
             console.log('Created new Group', name);
+            setTimeout(triggerRekey, INIT_TIMEOUT, nodeTopic); //12 seconds
             res.redirect('/');
         });
     }
@@ -76,17 +79,21 @@ function subscribeWithKey(topic, key){
 				.on('data', res => {
 					console.log('New message received');
 					let payload = web3.utils.hexToAscii(res.payload).split('||');
-					let seqNo = payload[0];
-					let message = payload[1];
-					messageStorage.push('Message from topic ( '+ res.topic + ' ): '+message);
-					//update global groupChannels map
-					let groupChannel = groupChannels.get(topic);
-					if(groupChannel){
-						groupChannel.messages.push(message);
-						groupChannel.seqNo++;
-						groupChannels.set(topic, groupChannel);
-						console.log('Updated Group Channels map');
-                        global.groupChannels = groupChannels;
+					if(payload[0] == 'REKEY'){
+						handleRekey(topic, payload);
+					} else {
+                        let seqNo = payload[0];
+                        let message = payload[1];
+                        messageStorage.push('Message from topic ( ' + res.topic + ' ): ' + message);
+                        //update global groupChannels map
+                        let groupChannel = groupChannels.get(topic);
+                        if (groupChannel) {
+                            groupChannel.messages.push(message);
+                            groupChannel.seqNo++;
+                            groupChannels.set(topic, groupChannel);
+                            console.log('Updated Group Channels map');
+                            global.groupChannels = groupChannels;
+                        }
                     }
 				});
 		console.log('Subscribed to topic: ', topic);
@@ -189,9 +196,17 @@ function sendInit(topics, groupContacts, sessionK, name){
 		}
 	}
 }
+//
+function sendRekey(prevTopics, prevK, sessionK, topics){
+    web3.shh.addSymKey(prevK, (err, id) => {
+        for (let i=1; i<prevTopics.length;i++) { //Skip topic[0] since group controller
+			var rekeyMessage = `REKEY||${i}||${topics}||${sessionK}`;
+			post(prevTopics[i], id, rekeyMessage);
+        }
+    });
+}
 //Handles parsing of INIT message
 //Creates and subscribes to groupChannel
-
 function setupSession(message){
 	var groupName = message[1];
 	var nodeNo = message[2];
@@ -201,6 +216,53 @@ function setupSession(message){
 	var sessionData = {topics:topics, sessionK:sessionK, nodeNo:nodeNo, messages:[], name: groupName, seqNo:0};
 	groupChannels.set(topics[nodeNo], sessionData);
 	global.groupChannels = groupChannels;
+}
+//Handle group member rekey
+//Extracts new session details, subscribes to new topic
+//Updates group channel map
+function handleRekey(topic, payload) {
+	let nodeNo = payload[1];
+	let newTopics = payload[2].split(',');
+	let newSessionK = payload[3];
+	let newNodeTopic = newTopics[nodeNo];
+	subscribeWithKey(newNodeTopic, newSessionK);
+	let groupChannel = global.groupChannels.get(topic);
+	groupChannel.topics = newTopics;  //Only update updated details, keep messages/seqNo
+	groupChannel.sessionK = newSessionK;
+	groupChannel.nodeNo = nodeNo;
+	global.groupChannels.set(newNodeTopic, groupChannel);
+    messageStorage.push('Rekey for topic ( ' + topic + ' ): ' + payload);
+	console.log('Successful Rekey for previous topic ',topic);
+	clearPrevSession(topic);
+}
+//Handle group controller session timeout rekey
+//Sends rekey details to all group members
+//Subscribes to new topic, updates group channels map
+//Resets the session timeout
+function triggerRekey(topic) {
+	console.log('Session timedout ', topic);
+	let groupChannel = global.groupChannels.get(topic);
+	let groupSize = groupChannel.topics.length;
+	let nodeNo = 0;
+    generateSessionData(groupSize, (newTopics, newSessionK) => {
+        sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics);
+       	let newSessionData = groupChannel;
+        newSessionData.topics = newTopics;
+        newSessionData.sessionK = newSessionK;
+        let nodeTopic = newTopics[nodeNo];
+        subscribeWithKey(nodeTopic, newSessionK);
+        groupChannels.set(nodeTopic, newSessionData);
+        global.groupChannels = groupChannels;
+        console.log('Rekey - updated groups');
+        setTimeout(triggerRekey, SESSION_TIMEOUT, nodeTopic); //10 seconds
+        //Remove the previous session details
+		clearPrevSession(topic);
+    });
+}
+
+function clearPrevSession(topic){
+	//TODO: Unsubscribe to topic
+	//TODO: Remove topic from groupchannel map
 }
 
 module.exports = router;
