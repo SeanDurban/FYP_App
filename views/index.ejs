@@ -13,14 +13,13 @@
                 <a href="#createGroupModal" class="btn btn-info btn-sm" data-toggle="modal">Create Group</a>
                 <br><br>
 				<h5>Active Groups</h5>
-				<div class="row">
 					<%if(groupChannels && groupChannels.size>0) { %>
 						<% for(let topic of groupChannels.keys()) {%>
+						<div class="row">
 							<a href='session/<%=topic%>' target="_blank"><%=topic%></a>
-							<br>
+						</div>
 					<%	}%>
 					<% } %>
-				</div>
 				<br>
 				<h5>All Messages Received</h5>
 					<%if(messageStorage && messageStorage.length>0) { %>

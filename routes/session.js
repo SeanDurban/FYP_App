@@ -12,7 +12,7 @@ router.get('/:topic', function(req, res, next) {
 	groupChannels = global.groupChannels;
 	let nodeTopic= req.params.topic;
 	let groupChannel = groupChannels.get(nodeTopic);
-  	res.render('session',{name: groupChannel.name, topic: nodeTopic, messages:groupChannel.messages});
+  	res.render('session',{name: groupChannel.name, topic: nodeTopic, messages:groupChannel.messages.reverse()});
 });
 
 router.post('/:topic', (req, res) => {

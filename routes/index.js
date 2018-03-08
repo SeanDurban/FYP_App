@@ -1,20 +1,19 @@
 var express = require('express');
 var router = express.Router();
 var Web3 = require('web3');
+var crypto = require('crypto');
 
 var web3 = new Web3(
 	new Web3.providers.WebsocketProvider('ws://localhost:8546')
 );
-var sessionStorage = [];
-var messageStorage = [];
+
+let messageStorage = [];
 var shh = web3.shh;
 const testTopic = '0xffddaa11';
 var appKeyId;
 var contacts = new Map();
 var groupChannels = new Map();
 var groupChannelName= '';
-
-//web3.shh.addPrivateKey('0x000b5462d1555b674a8b6b8daf24c09e5a8fa4f36251385a2a17d7b1a0d955a4').then(console.log);
 
 router.get('/', function(req, res, next) {
 	if(!appKeyId){
@@ -26,7 +25,7 @@ router.get('/', function(req, res, next) {
 		});
 	}
 	console.log(groupChannels);
-  	res.render('index', {messageStorage, groupChannels, contacts});
+  	res.render('index', {messageStorage:messageStorage.reverse(), groupChannels, contacts});
 });
 
 router.post('/contact', (req, res) => {
@@ -44,7 +43,7 @@ router.post('/createGroup', (req,res) => {
 		contactsGiven= (contactsGiven.constructor == Array)? contactsGiven:[contactsGiven];
         var name = req.body.groupName;
         var nodeNo = 0;  //Group controller nodeNo always 0
-        generateSessionData(contacts.length + 1, (topics, sessionK) => {
+        generateSessionData(contactsGiven.length + 1, (topics, sessionK) => {
             sendInit(topics, contactsGiven, sessionK, name);
             var sessionData = {topics: topics, sessionK: sessionK, nodeNo: nodeNo, messages: [], name: name, seqNo: 0};
             subscribeWithKey(topics[nodeNo], sessionK);
@@ -156,9 +155,10 @@ function postWithPK(topic, pK, message) {
 function generateSessionData(noMembers, callback) {
 	web3.shh.newSymKey((err,id) => {
 		web3.shh.getSymKey(id,(err2, key) => {
-			//Topics hardcoded for testing must be randomly generated securely
-			// Topic[0] is always controllers topic
-			var topics = ['0xffddaa22','0xffddab11'];
+			let topics = [];
+			for(let i=0; i<noMembers; i++){
+				topics[i] = '0x' + crypto.randomBytes(4).toString('hex');
+			}
 			callback(topics, key);
 		})
 	});
