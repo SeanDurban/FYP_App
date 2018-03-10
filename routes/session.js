@@ -10,9 +10,11 @@ var groupChannels = new Map();
 
 router.get('/:topic', function(req, res, next) {
 	groupChannels = global.groupChannels;
+	let contacts = global.contacts;
 	let nodeTopic= req.params.topic;
 	let groupChannel = groupChannels.get(nodeTopic);
-  	res.render('session',{name: groupChannel.name, topic: nodeTopic, messages:groupChannel.messages.reverse()});
+	let groupMembers = [];
+  	res.render('session',{name: groupChannel.name, topic: nodeTopic, messages:groupChannel.messages.reverse(), groupMembers, contacts});
 });
 
 router.post('/:topic', (req, res) => {
@@ -31,6 +33,24 @@ router.post('/:topic', (req, res) => {
 		res.redirect('/session/'+nodeTopic);
 	});
 
+});
+
+router.post('/addMember/:topic', (req, res) => {
+    let topic= req.params.topic;
+	console.log('Add Member ',topic);
+    res.redirect('/session/'+topic);
+});
+
+router.post('/removeMember/:topic', (req, res) => {
+    let topic= req.params.topic;
+    console.log('Remove Member ',topic);
+    res.redirect('/session/'+topic);
+});
+
+router.get('/exit/:topic', (req, res) => {
+    let topic= req.params.topic;
+    console.log('Exit group ',topic);
+    res.redirect('/session/'+topic);
 });
 
 function post(topic, keyID, message) {

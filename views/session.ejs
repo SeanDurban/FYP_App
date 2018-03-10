@@ -7,7 +7,15 @@
   </head>
   <body class="container">
 		<h2><%=name%></h2>
+		<br>
+				<% if(groupMembers && groupMembers.length>0) { %>
+				<a href="#addMemberModal" class="btn btn-info btn-sm" data-toggle="modal">Add Group Member</a>
 				<br>
+				<a href="#removeMemberModal" class="btn btn-info btn-sm" data-toggle="modal">Remove Group Member</a>
+				<br><br>
+				<% } else {%>
+					<a href="/session/exit/<%=topic%>" class="btn btn-info btn-sm">Leave Group</a>
+				<% } %>
 				<h5>Send Message</h5>
 				<br>
 				<form action="/session/<%=topic%>" method="post" id='sendForm'>
@@ -30,6 +38,68 @@
 					<%	}%>
 					<% } %>
 
+
+		<div id="addMemberModal" class="modal fade">
+			<div class="modal-dialog modal-confirm">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h4 class="modal-title">Add Group Member</h4>
+						<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+					</div>
+					<div class="modal-body">
+						<form action="/session/addMember/<%=topic%>" method="post" id='initForm'>
+							<div class="form-row">
+								<div class="form-group col-md-6">
+									<label for="contactSelect">Contacts to add</label>
+									<select id="contactSelect" multiple="multiple" name="contactSelect" required>
+                                        <%if(contacts) { %>
+                                        <% for(let contact of contacts.keys()) {%>
+                                        <%if(contact != 'Me'){%>
+										<option value="<%= contact %>"><%= contact %></option>
+                                        <% } } } %>
+									</select>
+								</div>
+							</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+							<button type="submit" class="btn btn-info">Add</button>
+						</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="removeMemberModal" class="modal fade">
+			<div class="modal-dialog modal-confirm">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h4 class="modal-title">Remove Group Member</h4>
+						<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+					</div>
+					<div class="modal-body">
+						<form action="/session/removeMember/<%=topic%>" method="post" id='initForm'>
+							<div class="form-row">
+								<div class="form-group col-md-6">
+									<label for="contactSelect">Group members to remove</label>
+									<select id="contactSelect" multiple="multiple" name="contactSelect" required>
+                                        <%if(groupMembers) { %>
+                                        <% for(let contact of groupMembers) {%>
+                                        <%if(contact != 'Me'){%>
+										<option value="<%= contact %>"><%= contact %></option>
+                                        <% } } } %>
+									</select>
+								</div>
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+								<button type="submit" class="btn btn-info">Remove</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
   </body>
 </html>
 <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>

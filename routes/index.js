@@ -33,6 +33,7 @@ router.post('/contact', (req, res) => {
     var name = req.body.name;
     var contactInfo = {topic: testTopic, pubKey: req.body.publicKey};
     contacts.set(name, contactInfo);
+    global.contacts = contacts;
 	console.log('Added contact ',name);
     res.redirect('/');
 });
