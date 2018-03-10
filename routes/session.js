@@ -13,7 +13,7 @@ router.get('/:topic', function(req, res, next) {
 	let contacts = global.contacts;
 	let nodeTopic= req.params.topic;
 	let groupChannel = groupChannels.get(nodeTopic);
-	let groupMembers = [];
+	let groupMembers = groupChannel.groupContacts? groupChannel.groupContacts : [];
   	res.render('session',{name: groupChannel.name, topic: nodeTopic, messages:groupChannel.messages.reverse(), groupMembers, contacts});
 });
 

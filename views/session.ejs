@@ -9,10 +9,10 @@
 		<h2><%=name%></h2>
 		<br>
 				<% if(groupMembers && groupMembers.length>0) { %>
-				<a href="#addMemberModal" class="btn btn-info btn-sm" data-toggle="modal">Add Group Member</a>
-				<br>
-				<a href="#removeMemberModal" class="btn btn-info btn-sm" data-toggle="modal">Remove Group Member</a>
-				<br><br>
+					<a href="#addMemberModal" class="btn btn-info btn-sm" data-toggle="modal">Add Group Member</a>
+					<br>
+					<a href="#removeMemberModal" class="btn btn-info btn-sm" data-toggle="modal">Remove Group Member</a>
+					<br><br>
 				<% } else {%>
 					<a href="/session/exit/<%=topic%>" class="btn btn-info btn-sm">Leave Group</a>
 				<% } %>
@@ -54,7 +54,7 @@
 									<select id="contactSelect" multiple="multiple" name="contactSelect" required>
                                         <%if(contacts) { %>
                                         <% for(let contact of contacts.keys()) {%>
-                                        <%if(contact != 'Me'){%>
+                                        <%if(contact != 'Me' && !groupMembers.includes(contact)){%>
 										<option value="<%= contact %>"><%= contact %></option>
                                         <% } } } %>
 									</select>

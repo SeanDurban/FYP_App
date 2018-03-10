@@ -39,7 +39,6 @@ router.post('/contact', (req, res) => {
 });
 
 router.post('/createGroup', (req,res) => {
-	//This will be changed to input as multiselect
 	var contactsGiven = req.body.contactSelect;
 	if(contactsGiven) {
 		contactsGiven= (contactsGiven.constructor == Array)? contactsGiven:[contactsGiven];
@@ -47,7 +46,7 @@ router.post('/createGroup', (req,res) => {
         var nodeNo = 0;  //Group controller nodeNo always 0
         generateSessionData(contactsGiven.length + 1, (topics, sessionK) => {
             sendInit(topics, contactsGiven, sessionK, name);
-            var sessionData = {topics: topics, sessionK: sessionK, nodeNo: nodeNo, messages: [], name: name, seqNo: 0};
+            var sessionData = {topics: topics, sessionK: sessionK, nodeNo: nodeNo, messages: [], name: name, seqNo: 0, groupContacts:contactsGiven};
             let nodeTopic = topics[nodeNo];
             subscribeWithKey(nodeTopic, sessionK);
             groupChannels.set(nodeTopic, sessionData);
