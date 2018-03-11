@@ -14,11 +14,11 @@
 					<a href="#removeMemberModal" class="btn btn-info btn-sm" data-toggle="modal">Remove Group Member</a>
 					<br><br>
 				<% } else {%>
-					<a href="/session/exit/<%=topic%>" class="btn btn-info btn-sm">Leave Group</a>
+					<a href="/session/<%=name%>/exit" class="btn btn-info btn-sm">Leave Group</a>
 				<% } %>
 				<h5>Send Message</h5>
 				<br>
-				<form action="/session/<%=topic%>" method="post" id='sendForm'>
+				<form action="/session/<%=name%>" method="post" id='sendForm'>
 					<div class="form-row">
 						<div class="form-group col-md-6">
 							<label for="inputMessage">Message</label>
@@ -47,7 +47,7 @@
 						<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
 					</div>
 					<div class="modal-body">
-						<form action="/session/addMember/<%=topic%>" method="post" id='initForm'>
+						<form action="/session/<%=name%>/addMember" method="post" id='initForm'>
 							<div class="form-row">
 								<div class="form-group col-md-6">
 									<label for="contactSelect">Contacts to add</label>
@@ -78,7 +78,7 @@
 						<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
 					</div>
 					<div class="modal-body">
-						<form action="/session/removeMember/<%=topic%>" method="post" id='initForm'>
+						<form action="/session/<%=name%>/removeMember" method="post" id='initForm'>
 							<div class="form-row">
 								<div class="form-group col-md-6">
 									<label for="contactSelect">Group members to remove</label>

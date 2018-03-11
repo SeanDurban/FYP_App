@@ -6,8 +6,8 @@ const web3 = new Web3(
 );
 const shh = web3.shh;
 
-var whisper = require('./whisper');
-const SESSION_TIMEOUT = 18000999; //18 seconds
+let whisper = require('./whisper');
+const SESSION_TIMEOUT = 18000; //18 seconds
 
 //Returns noMembers Topics and a SessionKey
 function generateSessionData(noMembers, callback) {
@@ -63,7 +63,8 @@ function sendRekey(prevTopics, prevK, sessionK, topics){
 //Resets the session timeout
 function triggerRekey(topic) {
     console.log('Session timedout ', topic);
-    let groupChannel = global.groupChannels.get(topic);
+    let groupName = global.activeTopics.get(topic);
+    let groupChannel = global.groupChannels.get(groupName);
     let groupSize = groupChannel.topics.length;
     let nodeNo = 0;
     generateSessionData(groupSize, (newTopics, newSessionK) => {
@@ -73,7 +74,8 @@ function triggerRekey(topic) {
         newSessionData.sessionK = newSessionK;
         let nodeTopic = newTopics[nodeNo];
         whisper.subscribeWithKey(nodeTopic, newSessionK);
-        global.groupChannels.set(nodeTopic, newSessionData);
+        global.activeTopics.set(nodeTopic, groupName);
+        global.groupChannels.set(groupName, newSessionData);
         console.log('Rekey - updated groups');
         setTimeout(triggerRekey, SESSION_TIMEOUT, nodeTopic); //10 seconds
         //Remove the previous session details
@@ -83,6 +85,6 @@ function triggerRekey(topic) {
 
 function clearPrevSession(topic){
     //TODO: Unsubscribe to topic
-    //TODO: Remove topic from groupchannel map
+    //TODO: Remove topic from topic:name map
 }
 module.exports = {generateSessionData, getNewKeys, sendInit, sendRekey,triggerRekey,clearPrevSession};

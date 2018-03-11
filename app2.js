@@ -19,7 +19,7 @@ app.set('view engine', 'ejs');
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(logger('dev'));
+//app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -62,6 +62,7 @@ httpServer.listen(5000, function() {
 
 //global vars
 global.contacts = new Map();
+global.activeTopics = new Map();
 global.groupChannels = new Map();
 global.messageStorage = [];
 

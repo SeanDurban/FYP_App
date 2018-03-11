@@ -14,7 +14,6 @@ const session = require('../source/session');
 const testTopic = '0xffddaa11';
 var appKeyId;
 const INIT_TIMEOUT = 25000;  //25 seconds
-const SESSION_TIMEOUT = 18000; //18 seconds
 
 router.get('/', function(req, res, next) {
 	if(!appKeyId){
@@ -42,13 +41,19 @@ router.post('/createGroup', (req,res) => {
 	if(contactsGiven) {
 		contactsGiven= (contactsGiven.constructor == Array)? contactsGiven:[contactsGiven];
         var name = req.body.groupName;
-        var nodeNo = 0;  //Group controller nodeNo always 0
         session.generateSessionData(contactsGiven.length + 1, (topics, sessionK) => {
             session.sendInit(topics, contactsGiven, sessionK, name);
-            var sessionData = {topics: topics, sessionK: sessionK, nodeNo: nodeNo, messages: [], name: name, seqNo: 0, groupContacts:contactsGiven};
-            let nodeTopic = topics[nodeNo];
+            //Must record positions of contacts in group for add/remove
+            let memberInfo = {};
+            for(let nodeNo =0 ; nodeNo<contactsGiven.length; nodeNo++){
+            	memberInfo[contactsGiven[nodeNo]] = nodeNo+1;
+			}
+			//Group initiator is controller and always nodeNo 0
+            let sessionData = {topics: topics, sessionK: sessionK, nodeNo: 0, messages: [], name: name, seqNo: 0, memberInfo:memberInfo};
+            let nodeTopic = topics[0];
             whisper.subscribeWithKey(nodeTopic, sessionK);
-            global.groupChannels.set(nodeTopic, sessionData);
+            global.groupChannels.set(name, sessionData);
+            global.activeTopics.set(nodeTopic, name);
             console.log('Created new Group', name);
             setTimeout(session.triggerRekey, INIT_TIMEOUT, nodeTopic); //12 seconds
             res.redirect('/');

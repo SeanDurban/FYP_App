@@ -20,17 +20,7 @@ function subscribeWithKey(topic, key){
                 if(payload[0] == 'REKEY'){
                     handleRekey(topic, payload);
                 } else {
-                    let seqNo = payload[0];
-                    let message = payload[1];
-                    global.messageStorage.push('Message from topic ( ' + res.topic + ' ): ' + message);
-                    //update global groupChannels map
-                    let groupChannel = groupChannels.get(topic);
-                    if (groupChannel) {
-                        groupChannel.messages.push(message);
-                        groupChannel.seqNo++;
-                        global.groupChannels.set(topic, groupChannel);
-                        console.log('Updated Group Channels map');
-                    }
+                    handleMessage(res.topic, payload);
                 }
             });
         console.log('Subscribed to topic: ', topic);
@@ -95,14 +85,33 @@ function postPublicKey(topic, pK, message) {
 //Handles parsing of INIT message
 //Creates and subscribes to groupChannel
 function setupSession(message){
-    var groupName = message[1];
-    var nodeNo = message[2];
-    var topics = message[3].split(',');
-    var sessionK = message[4];
-    subscribeWithKey(topics[nodeNo], sessionK);
-    var sessionData = {topics:topics, sessionK:sessionK, nodeNo:nodeNo, messages:[], name: groupName, seqNo:0};
-    global.groupChannels.set(topics[nodeNo], sessionData);
+    let groupName = message[1];
+    let nodeNo = message[2];
+    let topics = message[3].split(',');
+    let sessionK = message[4];
+    let sessionTopic = topics[nodeNo];
+    subscribeWithKey(sessionTopic, sessionK);
+    let sessionData = {topics:topics, sessionK:sessionK, nodeNo:nodeNo, messages:[], name: groupName, seqNo:0};
+    global.groupChannels.set(groupName, sessionData);
+    global.activeTopics.set(sessionTopic, groupName);
 }
+//Handle group member message
+//Extracts message and updates group channel map
+function handleMessage(topic, payload) {
+    let seqNo = payload[0];
+    let message = payload[1];
+    global.messageStorage.push('Message from topic ( ' + topic + ' ): ' + message);
+    //update global groupChannels map
+    let groupName = global.activeTopics.get(topic);
+    let groupChannel = global.groupChannels.get(groupName);
+    if (groupChannel) {
+        groupChannel.messages.push(message);
+        groupChannel.seqNo++;
+        global.groupChannels.set(groupName, groupChannel);
+        console.log('Updated Group Channels map');
+    }
+}
+
 //Handle group member rekey
 //Extracts new session details, subscribes to new topic
 //Updates group channel map
@@ -112,11 +121,13 @@ function handleRekey(topic, payload) {
     let newSessionK = payload[3];
     let newNodeTopic = newTopics[nodeNo];
     subscribeWithKey(newNodeTopic, newSessionK);
-    let groupChannel = global.groupChannels.get(topic);
+    let groupName = global.activeTopics.get(topic);
+    let groupChannel = global.groupChannels.get(groupName);
     groupChannel.topics = newTopics;  //Only update updated details, keep messages/seqNo
     groupChannel.sessionK = newSessionK;
     groupChannel.nodeNo = nodeNo;
-    global.groupChannels.set(newNodeTopic, groupChannel);
+    global.groupChannels.set(groupName, groupChannel);
+    global.activeTopics.set(newNodeTopic, groupName);
     global.messageStorage.push('Rekey for topic ( ' + topic + ' ): ' + payload);
     console.log('Successful Rekey for previous topic ',topic);
     clearPrevSession(topic);

@@ -14,9 +14,9 @@
                 <br><br>
 				<h5>Active Groups</h5>
 					<%if(groupChannels && groupChannels.size>0) { %>
-						<% for(let topic of groupChannels.keys()) {%>
+						<% for(let name of groupChannels.keys()) {%>
 						<div class="row">
-							<a href='session/<%=topic%>' target="_blank"><%=topic%></a>
+							<a href='session/<%=name%>' target="_blank"><%=name%></a>
 						</div>
 					<%	}%>
 					<% } %>
