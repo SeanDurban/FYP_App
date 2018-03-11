@@ -5,7 +5,9 @@ const web3 = new Web3(
     new Web3.providers.WebsocketProvider('ws://localhost:8546')
 );
 const shh = web3.shh;
-const whisper = require('./whisper.js');
+
+var whisper = require('./whisper');
+const SESSION_TIMEOUT = 18000999; //18 seconds
 
 //Returns noMembers Topics and a SessionKey
 function generateSessionData(noMembers, callback) {
@@ -40,7 +42,7 @@ function sendInit(topics, groupContacts, sessionK, name){
         var contactInfo = global.contacts.get(contact);
         if(contactInfo){
             var initMessage = `INIT||${name}||${nodeNo}||${topics}||${sessionK}`;
-            whisper.postWithPK(contactInfo.topic, contactInfo.pubKey, initMessage)
+            whisper.postPublicKey(contactInfo.topic, contactInfo.pubKey, initMessage);
             nodeNo++;
         }
     }
@@ -54,35 +56,7 @@ function sendRekey(prevTopics, prevK, sessionK, topics){
         }
     });
 }
-//Handles parsing of INIT message
-//Creates and subscribes to groupChannel
-function setupSession(message){
-    var groupName = message[1];
-    var nodeNo = message[2];
-    var topics = message[3].split(',');
-    var sessionK = message[4];
-    whisper.subscribeWithKey(topics[nodeNo], sessionK);
-    var sessionData = {topics:topics, sessionK:sessionK, nodeNo:nodeNo, messages:[], name: groupName, seqNo:0};
-    global.groupChannels.set(topics[nodeNo], sessionData);
-}
-//Handle group member rekey
-//Extracts new session details, subscribes to new topic
-//Updates group channel map
-function handleRekey(topic, payload) {
-    let nodeNo = payload[1];
-    let newTopics = payload[2].split(',');
-    let newSessionK = payload[3];
-    let newNodeTopic = newTopics[nodeNo];
-    whisper.subscribeWithKey(newNodeTopic, newSessionK);
-    let groupChannel = global.groupChannels.get(topic);
-    groupChannel.topics = newTopics;  //Only update updated details, keep messages/seqNo
-    groupChannel.sessionK = newSessionK;
-    groupChannel.nodeNo = nodeNo;
-    global.groupChannels.set(newNodeTopic, groupChannel);
-    global.messageStorage.push('Rekey for topic ( ' + topic + ' ): ' + payload);
-    console.log('Successful Rekey for previous topic ',topic);
-    whisper.clearPrevSession(topic);
-}
+
 //Handle group controller session timeout rekey
 //Sends rekey details to all group members
 //Subscribes to new topic, updates group channels map
@@ -103,7 +77,7 @@ function triggerRekey(topic) {
         console.log('Rekey - updated groups');
         setTimeout(triggerRekey, SESSION_TIMEOUT, nodeTopic); //10 seconds
         //Remove the previous session details
-        whisper.clearPrevSession(topic);
+        clearPrevSession(topic);
     });
 }
 
@@ -111,4 +85,4 @@ function clearPrevSession(topic){
     //TODO: Unsubscribe to topic
     //TODO: Remove topic from groupchannel map
 }
-module.exports = {generateSessionData, getNewKeys, sendInit, sendRekey, setupSession, handleRekey,triggerRekey,clearPrevSession};
+module.exports = {generateSessionData, getNewKeys, sendInit, sendRekey,triggerRekey,clearPrevSession};

@@ -15,7 +15,7 @@ router.get('/:topic', function(req, res, next) {
 	let nodeTopic= req.params.topic;
 	let groupChannel = global.groupChannels.get(nodeTopic);
 	let groupMembers = groupChannel.groupContacts? groupChannel.groupContacts : [];
-  	res.render('session',{name: groupChannel.name, topic: nodeTopic, messages:groupChannel.messages.reverse(), groupMembers, contacts});
+  	res.render('session',{name: groupChannel.name, topic: nodeTopic, messages:groupChannel.messages.slice().reverse(), groupMembers, contacts});
 });
 
 router.post('/:topic', (req, res) => {

@@ -5,7 +5,6 @@ const web3 = new Web3(
     new Web3.providers.WebsocketProvider('ws://localhost:8546')
 );
 const shh = web3.shh;
-const session = require('./session.js');
 
 //This subscribes to a topic with a symmetric key provided
 //This method is used in the group sessions/channels
@@ -19,7 +18,7 @@ function subscribeWithKey(topic, key){
                 console.log('New message received');
                 let payload = web3.utils.hexToAscii(res.payload).split('||');
                 if(payload[0] == 'REKEY'){
-                    session.handleRekey(topic, payload);
+                    handleRekey(topic, payload);
                 } else {
                     let seqNo = payload[0];
                     let message = payload[1];
@@ -50,7 +49,7 @@ function subscribeApp(keyID, topic){
             var m =  web3.utils.hexToAscii(res.payload).split('||');
             global.messageStorage.push('Message from base app '+m);
             if(m[0] == 'INIT') //If message is INIT = initialise group
-                session.setupSession(m);
+                setupSession(m);
         });
     console.log('App subscribed to: ', topic);
 }
@@ -75,7 +74,7 @@ function post(topic, keyID, message) {
     );
 }
 
-function postWithPK(topic, pK, message) {
+function postPublicKey(topic, pK, message) {
     web3.shh.post(
         {
             pubKey: pK, // encrypts using the public key
@@ -93,5 +92,38 @@ function postWithPK(topic, pK, message) {
         }
     );
 }
+//Handles parsing of INIT message
+//Creates and subscribes to groupChannel
+function setupSession(message){
+    var groupName = message[1];
+    var nodeNo = message[2];
+    var topics = message[3].split(',');
+    var sessionK = message[4];
+    subscribeWithKey(topics[nodeNo], sessionK);
+    var sessionData = {topics:topics, sessionK:sessionK, nodeNo:nodeNo, messages:[], name: groupName, seqNo:0};
+    global.groupChannels.set(topics[nodeNo], sessionData);
+}
+//Handle group member rekey
+//Extracts new session details, subscribes to new topic
+//Updates group channel map
+function handleRekey(topic, payload) {
+    let nodeNo = payload[1];
+    let newTopics = payload[2].split(',');
+    let newSessionK = payload[3];
+    let newNodeTopic = newTopics[nodeNo];
+    subscribeWithKey(newNodeTopic, newSessionK);
+    let groupChannel = global.groupChannels.get(topic);
+    groupChannel.topics = newTopics;  //Only update updated details, keep messages/seqNo
+    groupChannel.sessionK = newSessionK;
+    groupChannel.nodeNo = nodeNo;
+    global.groupChannels.set(newNodeTopic, groupChannel);
+    global.messageStorage.push('Rekey for topic ( ' + topic + ' ): ' + payload);
+    console.log('Successful Rekey for previous topic ',topic);
+    clearPrevSession(topic);
+}
 
-module.exports = {subscribeWithKey,subscribeApp,post,postWithPK};
+function clearPrevSession(topic){
+    //TODO: Unsubscribe to topic
+    //TODO: Remove topic from groupchannel map
+}
+module.exports = {subscribeWithKey,subscribeApp,post,postPublicKey};

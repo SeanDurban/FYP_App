@@ -8,8 +8,8 @@ var web3 = new Web3(
 );
 var shh = web3.shh;
 
-const whisper = require('../source/whisper.js');
-const session = require('../source/session.js');
+const whisper = require('../source/whisper');
+const session = require('../source/session');
 
 const testTopic = '0xffddaa11';
 var appKeyId;
@@ -50,7 +50,7 @@ router.post('/createGroup', (req,res) => {
             whisper.subscribeWithKey(nodeTopic, sessionK);
             global.groupChannels.set(nodeTopic, sessionData);
             console.log('Created new Group', name);
-            setTimeout(triggerRekey, INIT_TIMEOUT, nodeTopic); //12 seconds
+            setTimeout(session.triggerRekey, INIT_TIMEOUT, nodeTopic); //12 seconds
             res.redirect('/');
         });
     }
