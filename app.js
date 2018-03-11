@@ -60,4 +60,10 @@ httpServer.listen(4000, function() {
   console.log("Server listening on port 4000");
 });
 
+//global vars
+global.contacts = new Map();
+global.groupChannels = new Map();
+global.messageStorage = [];
+
+
 module.exports = app;

@@ -60,4 +60,9 @@ httpServer.listen(5000, function() {
     console.log("Server listening on port 5000");
 });
 
+//global vars
+global.contacts = new Map();
+global.groupChannels = new Map();
+global.messageStorage = [];
+
 module.exports = app;
