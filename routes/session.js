@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var Web3 = require('web3');
 var web3 = new Web3(
-	new Web3.providers.WebsocketProvider('ws://localhost:8546')
+	new Web3.providers.WebsocketProvider(global.nodeWS)
 );
 
 var shh = web3.shh;

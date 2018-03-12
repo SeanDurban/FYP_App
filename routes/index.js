@@ -4,14 +4,13 @@ var Web3 = require('web3');
 var crypto = require('crypto');
 
 var web3 = new Web3(
-	new Web3.providers.WebsocketProvider('ws://localhost:8546')
+	new Web3.providers.WebsocketProvider(global.nodeWS)
 );
 var shh = web3.shh;
 
 const whisper = require('../source/whisper');
 const session = require('../source/session');
 
-const testTopic = '0xffddaa11';
 var appKeyId;
 const INIT_TIMEOUT = 25000;  //25 seconds
 
@@ -19,9 +18,9 @@ router.get('/', function(req, res, next) {
 	if(!appKeyId){
 		session.getNewKeys((id,pk) => {
 			appKeyId = id;
-			var contactInfo = {topic: testTopic, pubKey:pk };
+			var contactInfo = {topic: global.topicInit, pubKey:pk };
 			global.contacts.set('Me', contactInfo);
-			whisper.subscribeApp(id, testTopic);
+			whisper.subscribeApp(id, global.topicInit);
 		});
 	}
 	console.log(global.groupChannels);
@@ -30,7 +29,7 @@ router.get('/', function(req, res, next) {
 
 router.post('/contact', (req, res) => {
     let name = req.body.name;
-    let contactInfo = {topic: testTopic, pubKey: req.body.publicKey};
+    let contactInfo = {topic: global.topicInit, pubKey: req.body.publicKey};
     global.contacts.set(name, contactInfo);
 	console.log('Added contact ',name);
     res.redirect('/');

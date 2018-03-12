@@ -2,7 +2,7 @@ const Web3 = require('web3');
 const crypto = require('crypto');
 
 const web3 = new Web3(
-    new Web3.providers.WebsocketProvider('ws://localhost:8546')
+    new Web3.providers.WebsocketProvider(global.nodeWS)
 );
 const shh = web3.shh;
 

@@ -3,35 +3,40 @@ var path = require('path');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-
-var index = require('./routes/index');
-var sessionRoute = require('./routes/session');
-
 var http = require("http");
 var flash = require('connect-flash');
 var session = require('express-session');
 
 var app = express();
 
+//global vars
+global.contacts = new Map();
+global.activeTopics = new Map();
+global.groupChannels = new Map();
+global.messageStorage = [];
+//App details
+global.nodeWS = 'ws://localhost:8546';
+global.topicInit = '0xffddaa11';
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 //app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 //Session storage
-app.use(cookieParser('secret2'));
-app.use(session({ secret: 'secret2',
+app.use(cookieParser('secret'));
+app.use(session({ secret: 'secret',
     resave: true,
     saveUninitialized: true
 }));
 app.use(flash());
 
 
+const index = require('./routes/index');
+const sessionRoute = require('./routes/session');
 app.use('/', index);
 app.use('/session', sessionRoute);
 
@@ -60,10 +65,5 @@ httpServer.listen(5000, function() {
     console.log("Server listening on port 5000");
 });
 
-//global vars
-global.contacts = new Map();
-global.activeTopics = new Map();
-global.groupChannels = new Map();
-global.messageStorage = [];
 
 module.exports = app;

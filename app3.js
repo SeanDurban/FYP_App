@@ -29,8 +29,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 //Session storage
 app.use(cookieParser('secret'));
 app.use(session({ secret: 'secret',
-resave: true,
-saveUninitialized: true
+    resave: true,
+    saveUninitialized: true
 }));
 app.use(flash());
 
@@ -43,26 +43,26 @@ app.use('/session', sessionRoute);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
+    var err = new Error('Not Found');
+    err.status = 404;
+    next(err);
 });
 
 // error handler
 app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+    // set locals, only providing error in development
+    res.locals.message = err.message;
+    res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+    // render the error page
+    res.status(err.status || 500);
+    res.render('error');
 });
 
 //Create Server and listen on port 3000
 var httpServer = http.createServer(app);
-httpServer.listen(4000, function() {
-  console.log("Server listening on port 4000");
+httpServer.listen(6000, function() {
+    console.log("Server listening on port 6000");
 });
 
 
