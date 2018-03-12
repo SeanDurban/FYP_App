@@ -29,42 +29,43 @@ router.get('/', function(req, res, next) {
 });
 
 router.post('/contact', (req, res) => {
-    var name = req.body.name;
-    var contactInfo = {topic: testTopic, pubKey: req.body.publicKey};
+    let name = req.body.name;
+    let contactInfo = {topic: testTopic, pubKey: req.body.publicKey};
     global.contacts.set(name, contactInfo);
 	console.log('Added contact ',name);
     res.redirect('/');
 });
 
 router.post('/createGroup', (req,res) => {
-	var contactsGiven = req.body.contactSelect;
+	let contactsGiven = req.body.contactSelect;
 	if(contactsGiven) {
 		contactsGiven= (contactsGiven.constructor == Array)? contactsGiven:[contactsGiven];
-        var name = req.body.groupName;
+        let name = req.body.groupName;
         session.generateSessionData(contactsGiven.length + 1, (topics, sessionK) => {
-            session.sendInit(topics, contactsGiven, sessionK, name);
+            //Group initiator is controller and always nodeNo 0
+        	session.sendInit(topics, contactsGiven, sessionK, name, 1);
+            let nodeTopic = topics[0];
+            whisper.subscribeWithKey(nodeTopic, sessionK);
+            //Update all relevant maps
             //Must record positions of contacts in group for add/remove
             let memberInfo = {};
             for(let nodeNo =0 ; nodeNo<contactsGiven.length; nodeNo++){
             	memberInfo[contactsGiven[nodeNo]] = nodeNo+1;
 			}
-			//Group initiator is controller and always nodeNo 0
-            let sessionData = {topics: topics, sessionK: sessionK, nodeNo: 0, messages: [], name: name, seqNo: 0, memberInfo:memberInfo};
-            let nodeTopic = topics[0];
-            whisper.subscribeWithKey(nodeTopic, sessionK);
+            let sessionData = {topics: topics, sessionK: sessionK, nodeNo: 0, messages: [], seqNo: 0, memberInfo:memberInfo};
+            sessionData.timeout = setTimeout(session.triggerRekey, INIT_TIMEOUT, nodeTopic); //12 seconds
             global.groupChannels.set(name, sessionData);
             global.activeTopics.set(nodeTopic, name);
             console.log('Created new Group', name);
-            setTimeout(session.triggerRekey, INIT_TIMEOUT, nodeTopic); //12 seconds
             res.redirect('/');
         });
     }
 });
 
 router.post('/post', (req, res) => {
-	var topic = req.body.inputTopic;
-	var message = req.body.inputMessage;
-	var sessionK = req.body.inputSessionK;
+	let topic = req.body.inputTopic;
+	let message = req.body.inputMessage;
+	let sessionK = req.body.inputSessionK;
  	web3.shh.addSymKey(sessionK, (err, id) => {
 		whisper.post(topic, id, message);
 		global.messageStorage.push('Message sent to topic ( '+ topic + ' ): '+ message);

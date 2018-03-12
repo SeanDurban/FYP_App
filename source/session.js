@@ -36,8 +36,7 @@ function getNewKeys(callback){
 }
 //Send initialise message to all group members
 //Message includes all details required to participate in group channel
-function sendInit(topics, groupContacts, sessionK, name){
-    let nodeNo = 1;
+function sendInit(topics, groupContacts, sessionK, name, nodeNo){
     for(var contact of groupContacts) {
         var contactInfo = global.contacts.get(contact);
         if(contactInfo){
@@ -69,15 +68,15 @@ function triggerRekey(topic) {
     let nodeNo = 0;
     generateSessionData(groupSize, (newTopics, newSessionK) => {
         sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics);
+        let nodeTopic = newTopics[nodeNo];
+        whisper.subscribeWithKey(nodeTopic, newSessionK);
         let newSessionData = groupChannel;
         newSessionData.topics = newTopics;
         newSessionData.sessionK = newSessionK;
-        let nodeTopic = newTopics[nodeNo];
-        whisper.subscribeWithKey(nodeTopic, newSessionK);
+        newSessionData.timeout = setTimeout(triggerRekey, SESSION_TIMEOUT, nodeTopic);
         global.activeTopics.set(nodeTopic, groupName);
         global.groupChannels.set(groupName, newSessionData);
         console.log('Rekey - updated groups');
-        setTimeout(triggerRekey, SESSION_TIMEOUT, nodeTopic); //10 seconds
         //Remove the previous session details
         clearPrevSession(topic);
     });
@@ -85,6 +84,6 @@ function triggerRekey(topic) {
 
 function clearPrevSession(topic){
     //TODO: Unsubscribe to topic
-    //TODO: Remove topic from topic:name map
+   // global.activeTopics.delete(topic);
 }
 module.exports = {generateSessionData, getNewKeys, sendInit, sendRekey,triggerRekey,clearPrevSession};

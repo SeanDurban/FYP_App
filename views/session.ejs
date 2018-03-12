@@ -30,13 +30,16 @@
 				</form> <br>
 
 				<h5>Messages Received</h5>
-					<%if(messages && messages.length>0) { %>
-						<% for(let message of messages) {%>
-							<div class="row">
-							<p><%=message%></p>
-						</div>
-					<%	}%>
-					<% } %>
+		<table class="table table-sm table-striped table-bordered">
+			<tbody>
+            <%if(messages && messages.length>0) { %>
+            <% for(let message of messages) {%>
+			<tr><td><%=message%></td></tr>
+            <%	}%>
+            <% } %>
+			</tbody>
+		</table>
+
 
 
 		<div id="addMemberModal" class="modal fade">
