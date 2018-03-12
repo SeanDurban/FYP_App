@@ -55,6 +55,15 @@ function sendRekey(prevTopics, prevK, sessionK, topics){
         }
     });
 }
+//
+function sendEnd(topics, sessionK){
+    web3.shh.addSymKey(sessionK, (err,id) => {
+        for (let topic of topics) {
+            let message = 'END';
+            whisper.post(topic, id, message);
+        }
+    })
+}
 
 //Handle group controller session timeout rekey
 //Sends rekey details to all group members
@@ -86,4 +95,4 @@ function clearPrevSession(topic){
     //TODO: Unsubscribe to topic
    // global.activeTopics.delete(topic);
 }
-module.exports = {generateSessionData, getNewKeys, sendInit, sendRekey,triggerRekey,clearPrevSession};
+module.exports = {generateSessionData, getNewKeys, sendInit, sendRekey, sendEnd,triggerRekey,clearPrevSession};

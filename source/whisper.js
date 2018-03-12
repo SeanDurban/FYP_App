@@ -17,8 +17,11 @@ function subscribeWithKey(topic, key){
             .on('data', res => {
                 console.log('New message received');
                 let payload = web3.utils.hexToAscii(res.payload).split('||');
-                if(payload[0] == 'REKEY'){
+                if (payload[0] == 'REKEY') {
                     handleRekey(topic, payload);
+                }
+                else if(payload[0] == 'END'){
+                    handleEnd(topic);
                 } else {
                     handleMessage(res.topic, payload);
                 }
@@ -56,7 +59,7 @@ function post(topic, keyID, message) {
             powTarget: 0.5
         }, (err, res) => {
             if (err) {
-                console.log('err post: ', err);
+                console.log('err post: ');
             } else{
                 console.log('Sent message');
             }
@@ -75,7 +78,7 @@ function postPublicKey(topic, pK, message) {
             powTarget: 0.5
         }, (err, res) => {
             if (err) {
-                console.log('err post: ', err);
+                console.log('err post: ');
             } else{
                 console.log('Sent message ', topic);
             }
@@ -132,7 +135,17 @@ function handleRekey(topic, payload) {
     console.log('Successful Rekey for previous topic ',topic);
     clearPrevSession(topic);
 }
-
+//
+function handleEnd(topic){
+    let groupName = global.activeTopics.get(topic);
+    let groupChannel = global.groupChannels.get(groupName);
+    global.messageStorage.push('End for topic ('+ topic + ')');
+    groupChannel.messages.push('End of session');
+    groupChannel.isExpired = true;
+    global.groupChannels.set(groupName, groupChannel);
+    clearPrevSession(topic);
+}
+//
 function clearPrevSession(topic){
     //TODO: Unsubscribe to topic
     //TODO: Remove topic from groupchannel map

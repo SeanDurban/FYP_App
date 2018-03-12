@@ -8,6 +8,7 @@
   <body class="container">
 		<h2><%=name%></h2>
 		<br>
+				<% if(!isExpired) { %>
 				<% if(groupMembers && groupMembers.length>0) { %>
 					<a href="#addMemberModal" class="btn btn-info btn-sm" data-toggle="modal">Add Group Member</a>
 					<br>
@@ -28,7 +29,7 @@
 
 					<button type="submit" class="btn btn-primary btn-sm">Send</button>
 				</form> <br>
-
+				<% } %>
 				<h5>Messages Received</h5>
 		<table class="table table-sm table-striped table-bordered">
 			<tbody>
@@ -84,8 +85,8 @@
 						<form action="/session/<%=name%>/removeMember" method="post" id='initForm'>
 							<div class="form-row">
 								<div class="form-group col-md-6">
-									<label for="contactSelect">Group members to remove</label>
-									<select id="contactSelect" multiple="multiple" name="contactSelect" required>
+									<label for="memberSelect">Group members to remove</label>
+									<select id="memberSelect" name="memberSelect" required>
                                         <%if(groupMembers) { %>
                                         <% for(let contact of groupMembers) {%>
                                         <%if(contact != 'Me'){%>

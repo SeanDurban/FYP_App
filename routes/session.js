@@ -19,7 +19,11 @@ router.get('/:name', function(req, res, next) {
     if(groupChannel.nodeNo === 0) { //Only group controller has this field
         groupMembers = Object.keys(groupChannel.memberInfo);
     }
-  	res.render('session',{name: groupName, messages:groupChannel.messages.slice().reverse(), groupMembers, contacts});
+    let isExpired =false;
+    if(groupChannel.isExpired){
+        isExpired = true;
+    }
+  	res.render('session',{name: groupName, messages:groupChannel.messages.slice().reverse(), groupMembers, contacts, isExpired});
 });
 
 router.post('/:name', (req, res) => {
@@ -73,11 +77,39 @@ router.post('/:name/addMember', (req, res) => {
 
 router.post('/:name/removeMember', (req, res) => {
     let groupName= req.params.name;
-    console.log('Remove Member ',groupName);
-    //TODO: Generate new details
-    //TODO: Send END to removed member
-    //TODO: Send UPDATE to existing members - may need to change nodeNo
-    //TODO: Update maps
+    let memberSelect = req.body.memberSelect;
+    memberSelect= (memberSelect.constructor == Array)? memberSelect:[memberSelect];
+    console.log('Remove Member ',memberSelect);
+    let groupChannel = global.groupChannels.get(groupName);
+    let newGroupSize = groupChannel.topics.length - 1;
+    //TODO: extend this to multiple group members
+    let removedNo = groupChannel.memberInfo[memberSelect[0]];
+    let removedTopic = groupChannel.topics[removedNo];
+    session.sendEnd([removedTopic], groupChannel.sessionK);
+    //Remove group member from topics and memberInfo
+    groupChannel.topics.splice(removedNo,1);
+    delete groupChannel.memberInfo[memberSelect[0]];
+    //Clear current timeout
+    clearTimeout(groupChannel.timeout);
+    session.generateSessionData(newGroupSize, (newTopics, newSessionK) => {
+        session.sendRekey(groupChannel.topics, groupChannel.sessionK, newTopics, newSessionK);
+        whisper.subscribeWithKey(newTopics[0], newSessionK);
+        let newSessionData = groupChannel;
+        //Update memberInfo (nodeNo may have changed)
+        for(let name of Object.keys(groupChannel.memberInfo)){
+            if(groupChannel.memberInfo[name] > removedNo){
+                groupChannel.memberInfo[name]--;
+            }
+        }
+        newSessionData.topics = newTopics;
+        newSessionData.sessionK = newSessionK;
+        newSessionData.timeout = setTimeout(session.triggerRekey, SESSION_TIMEOUT, newTopics[0]);
+        global.activeTopics.set(newTopics[0], groupName);
+        global.groupChannels.set(groupName, newSessionData);
+
+        //Clear prev session
+        session.clearPrevSession(groupChannel.topics[0]);
+    } );
     res.redirect('/session/'+groupName);
 });
 
