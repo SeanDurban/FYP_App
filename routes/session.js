@@ -92,7 +92,7 @@ router.post('/:name/removeMember', (req, res) => {
     //Clear current timeout
     clearTimeout(groupChannel.timeout);
     session.generateSessionData(newGroupSize, (newTopics, newSessionK) => {
-        session.sendRekey(groupChannel.topics, groupChannel.sessionK, newTopics, newSessionK);
+        session.sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics);
         whisper.subscribeWithKey(newTopics[0], newSessionK);
         let newSessionData = groupChannel;
         //Update memberInfo (nodeNo may have changed)

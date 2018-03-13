@@ -61,8 +61,8 @@ app.use(function(err, req, res, next) {
 
 //Create Server and listen on port 3000
 var httpServer = http.createServer(app);
-httpServer.listen(6000, function() {
-    console.log("Server listening on port 6000");
+httpServer.listen(5001, function() {
+    console.log("Server listening on port 5001");
 });
 
 
