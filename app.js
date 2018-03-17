@@ -17,6 +17,7 @@ global.messageStorage = [];
 //App details
 global.nodeWS = 'ws://localhost:8546';
 global.topicInit = '0xffddaa11';
+global.messageTimer = 5000; //5 secs
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

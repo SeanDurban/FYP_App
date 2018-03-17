@@ -78,21 +78,29 @@ function triggerRekey(topic) {
     generateSessionData(groupSize, (newTopics, newSessionK) => {
         sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics);
         let nodeTopic = newTopics[nodeNo];
-        whisper.subscribeWithKey(nodeTopic, newSessionK);
-        let newSessionData = groupChannel;
-        newSessionData.topics = newTopics;
-        newSessionData.sessionK = newSessionK;
-        newSessionData.timeout = setTimeout(triggerRekey, SESSION_TIMEOUT, nodeTopic);
-        global.activeTopics.set(nodeTopic, groupName);
-        global.groupChannels.set(groupName, newSessionData);
-        console.log('Rekey - updated groups');
-        //Remove the previous session details
-        clearPrevSession(topic);
+        whisper.createFilter(newTopics[0], newSessionK, (filterID) => {
+            let newSessionData = groupChannel;
+            newSessionData.filterID = filterID;
+            newSessionData.topics = newTopics;
+            newSessionData.sessionK = newSessionK;
+            newSessionData.timeout = setTimeout(triggerRekey, SESSION_TIMEOUT, nodeTopic);
+            setTimeout(whisper.getFilterMessages, global.messageTimer, filterID, groupName);
+            global.activeTopics.set(nodeTopic, groupName);
+            global.groupChannels.set(groupName, newSessionData);
+            console.log('Rekey - updated groups');
+            //Remove the previous session details
+            clearPrevSession(topic);
+        });
     });
 }
-
+//Regularly polls a message filter for new messages
+function getNewMessages(groupName) {
+    let filterID = global.groupChannels.get(groupName).filterID;
+    whisper.getFilterMessages(filterID, groupName);
+}
 function clearPrevSession(topic){
-    //TODO: Unsubscribe to topic
+    //TODO:Set timer when triggered: (Allows other members to handle rekey)
+    //TODO: delete message filters
    // global.activeTopics.delete(topic);
 }
-module.exports = {generateSessionData, getNewKeys, sendInit, sendRekey, sendEnd,triggerRekey,clearPrevSession};
+module.exports = {generateSessionData, getNewKeys, sendInit, sendRekey, sendEnd,triggerRekey,clearPrevSession, getNewMessages};

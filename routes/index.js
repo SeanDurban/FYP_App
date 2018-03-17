@@ -23,7 +23,6 @@ router.get('/', function(req, res, next) {
 			whisper.subscribeApp(id, global.topicInit);
 		});
 	}
-	console.log(global.groupChannels);
   	res.render('index', {messageStorage:global.messageStorage.slice().reverse(), groupChannels:global.groupChannels, contacts:global.contacts});
 });
 
@@ -44,19 +43,22 @@ router.post('/createGroup', (req,res) => {
             //Group initiator is controller and always nodeNo 0
         	session.sendInit(topics, contactsGiven, sessionK, name, 1);
             let nodeTopic = topics[0];
-            whisper.subscribeWithKey(nodeTopic, sessionK);
-            //Update all relevant maps
-            //Must record positions of contacts in group for add/remove
-            let memberInfo = {};
-            for(let nodeNo =0 ; nodeNo<contactsGiven.length; nodeNo++){
-            	memberInfo[contactsGiven[nodeNo]] = nodeNo+1;
-			}
-            let sessionData = {topics: topics, sessionK: sessionK, nodeNo: 0, messages: [], seqNo: 0, memberInfo:memberInfo};
-            sessionData.timeout = setTimeout(session.triggerRekey, INIT_TIMEOUT, nodeTopic); //12 seconds
-            global.groupChannels.set(name, sessionData);
-            global.activeTopics.set(nodeTopic, name);
-            console.log('Created new Group', name);
-            res.redirect('/');
+            whisper.createFilter(nodeTopic,sessionK, (filterID) => {
+				//Update all relevant maps
+				//Must record positions of contacts in group for add/remove
+				let memberInfo = {};
+				for(let nodeNo =0 ; nodeNo<contactsGiven.length; nodeNo++){
+					memberInfo[contactsGiven[nodeNo]] = nodeNo+1;
+				}
+				let sessionData = {topics: topics, sessionK: sessionK, nodeNo: 0, messages: [], seqNo: 0,
+					memberInfo:memberInfo, filterID:filterID, isExpired:false};
+				sessionData.timeout = setTimeout(session.triggerRekey, INIT_TIMEOUT, nodeTopic); //12 seconds
+				setTimeout(session.getNewMessages, global.messageTimer, name);
+				global.groupChannels.set(name, sessionData);
+				global.activeTopics.set(nodeTopic, name);
+				console.log('Created new Group', name);
+				res.redirect('/');
+            });
         });
     }
 });

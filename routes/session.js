@@ -37,7 +37,6 @@ router.post('/:name', (req, res) => {
             whisper.post(topic, id, message);
         }
         groupChannel.seqNo++;
-        //This could be possible race condition site
         global.groupChannels.set(groupName,groupChannel);
 		res.redirect('/session/'+groupName);
 	});
@@ -56,21 +55,23 @@ router.post('/:name/addMember', (req, res) => {
 	session.generateSessionData(newGroupSize, (newTopics, newSessionK) => {
 	    session.sendInit(newTopics, contactsGiven, newSessionK, groupName, newNodeNo);
 	    session.sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics);
-        whisper.subscribeWithKey(newTopics[0], newSessionK);
+        whisper.createFilter(newTopics[0], newSessionK, (filterID) => {
+            //Update Maps
+            let newSessionData = groupChannel;
+            for(let i =0 ; i<contactsGiven.length; i++){
+                newSessionData.memberInfo[contactsGiven[i]] = newNodeNo+i;
+            }
+            newSessionData.filterID = filterID;
+            newSessionData.topics = newTopics;
+            newSessionData.sessionK = newSessionK;
+            newSessionData.timeout = setTimeout(session.triggerRekey, SESSION_TIMEOUT, newTopics[0]);
+            setTimeout(whisper.getFilterMessages, global.messageTimer, filterId, groupName);
+            global.activeTopics.set(newTopics[0], groupName);
+            global.groupChannels.set(groupName, newSessionData);
 
-        //Update Maps
-        let newSessionData = groupChannel;
-        for(let i =0 ; i<contactsGiven.length; i++){
-            newSessionData.memberInfo[contactsGiven[i]] = newNodeNo+i;
-        }
-        newSessionData.topics = newTopics;
-        newSessionData.sessionK = newSessionK;
-        newSessionData.timeout = setTimeout(session.triggerRekey, SESSION_TIMEOUT, newTopics[0]);
-        global.activeTopics.set(newTopics[0], groupName);
-        global.groupChannels.set(groupName, newSessionData);
-
-        //Clear prev session
-        session.clearPrevSession(groupChannel.topics[0]);
+            //Clear prev session
+            session.clearPrevSession(groupChannel.topics[0]);
+        });
     });
     res.redirect('/session/'+groupName);
 });
@@ -94,21 +95,25 @@ router.post('/:name/removeMember', (req, res) => {
     session.generateSessionData(newGroupSize, (newTopics, newSessionK) => {
         session.sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics);
         whisper.subscribeWithKey(newTopics[0], newSessionK);
-        let newSessionData = groupChannel;
-        //Update memberInfo (nodeNo may have changed)
-        for(let name of Object.keys(groupChannel.memberInfo)){
-            if(groupChannel.memberInfo[name] > removedNo){
-                groupChannel.memberInfo[name]--;
+        whisper.createFilter(newTopics[0], newSessionK, (filterID) => {
+            let newSessionData = groupChannel;
+            //Update memberInfo (nodeNo may have changed)
+            for (let name of Object.keys(groupChannel.memberInfo)) {
+                if (groupChannel.memberInfo[name] > removedNo) {
+                    groupChannel.memberInfo[name]--;
+                }
             }
-        }
-        newSessionData.topics = newTopics;
-        newSessionData.sessionK = newSessionK;
-        newSessionData.timeout = setTimeout(session.triggerRekey, SESSION_TIMEOUT, newTopics[0]);
-        global.activeTopics.set(newTopics[0], groupName);
-        global.groupChannels.set(groupName, newSessionData);
+            newSessionData.filterID = filterID;
+            newSessionData.topics = newTopics;
+            newSessionData.sessionK = newSessionK;
+            newSessionData.timeout = setTimeout(session.triggerRekey, SESSION_TIMEOUT, newTopics[0]);
+            setTimeout(whisper.getFilterMessages, global.messageTimer, filterId, groupName);
+            global.activeTopics.set(newTopics[0], groupName);
+            global.groupChannels.set(groupName, newSessionData);
 
-        //Clear prev session
-        session.clearPrevSession(groupChannel.topics[0]);
+            //Clear prev session
+            session.clearPrevSession(groupChannel.topics[0]);
+        });
     } );
     res.redirect('/session/'+groupName);
 });
