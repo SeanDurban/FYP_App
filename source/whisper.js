@@ -64,13 +64,13 @@ function createFilter(topic,key, callback){
 //Regularly polls a message filter for new messages
 //If receives new messages then records them
 //Resets timer - This could be configurable in settings
-function getFilterMessages(filterId, groupName){
+function getFilterMessages(filterID, groupName){
     let groupChannel = global.groupChannels.get(groupName);
     if(!groupChannel.isExpired) {
-        web3.shh.getFilterMessages(filterId).then((envelopes) => {
+        web3.shh.getFilterMessages(filterID).then((envelopes) => {
             if (envelopes && envelopes.length > 0) {
                 for (let envelope of envelopes) {
-                    console.log('New message received');
+                    console.log('New message received for ', envelope.topic);
                     let payload = web3.utils.hexToAscii(envelope.payload).split('||');
                     let topic = envelope.topic;
                     if (payload[0] == 'REKEY') {
@@ -85,10 +85,12 @@ function getFilterMessages(filterId, groupName){
             } else {
                 console.log('No new messages for :', groupName);
             }
-            setTimeout(getFilterMessages, global.messageTimer, filterId, groupName);
+            let messageTimer = setTimeout(getFilterMessages, global.messageTimer, filterID, groupName);
+            global.messageTimers.set(filterID, messageTimer);
         });
     }
 }
+//Send message with symmetric key with topic and key ID provided
 //Assumes message in ASCII format
 function post(topic, keyID, message) {
     web3.shh.post(
@@ -101,14 +103,14 @@ function post(topic, keyID, message) {
             powTarget: 0.5
         }, (err, res) => {
             if (err) {
-                console.log('err post: ');
+                console.log('err post: ', err);
             } else{
-                console.log('Sent message');
+                console.log('Sent message to ', topic);
             }
         }
     );
 }
-//Test function for sending files in hex format
+//Function for sending files in hex format
 //Files limited to 10mb by underlying DEVp2p transport
 function postFile(topic, keyID, filePath) {
     fs.readFile(filePath, 'utf8', (err,data)=>{
@@ -135,6 +137,7 @@ function postFile(topic, keyID, filePath) {
         );
     });
 }
+//Send message with asymmetric key and topic
 function postPublicKey(topic, pK, message) {
     web3.shh.post(
         {
@@ -146,7 +149,7 @@ function postPublicKey(topic, pK, message) {
             powTarget: 0.5
         }, (err, res) => {
             if (err) {
-                console.log('err post: ');
+                console.log('err postPK: ', err);
             } else{
                 console.log('Sent message ', topic);
             }
@@ -163,7 +166,8 @@ function setupSession(message){
     let sessionTopic = topics[nodeNo];
     createFilter(sessionTopic, sessionK, (filterID) => {
         let sessionData = {topics: topics, sessionK: sessionK, nodeNo: nodeNo, messages: [], name: groupName, seqNo: 0, filterID:filterID, isExpired:false};
-        setTimeout(getFilterMessages, global.messageTimer, filterID, groupName);
+        let messageTimer = setTimeout(getFilterMessages, global.messageTimer, filterID, groupName);
+        global.messageTimers.set(filterID, messageTimer);
         global.groupChannels.set(groupName, sessionData);
         global.activeTopics.set(sessionTopic, groupName);
     });
@@ -193,9 +197,10 @@ function handleRekey(topic, payload) {
     let newTopics = payload[2].split(',');
     let newSessionK = payload[3];
     let newNodeTopic = newTopics[nodeNo];
+	let groupName = global.activeTopics.get(topic);
+	let groupChannel = global.groupChannels.get(groupName);
+    let oldFilterID = groupChannel.filterID;
     createFilter(newNodeTopic, newSessionK, (filterID) => {
-        let groupName = global.activeTopics.get(topic);
-        let groupChannel = global.groupChannels.get(groupName);
         groupChannel.filterID =filterID;
         groupChannel.topics = newTopics;  //Only update updated details, keep messages/seqNo
         groupChannel.sessionK = newSessionK;
@@ -204,11 +209,14 @@ function handleRekey(topic, payload) {
         global.activeTopics.set(newNodeTopic, groupName);
         global.messageStorage.push('Rekey for topic ( ' + topic + ' ): ' + payload);
         console.log('Successful Rekey for previous topic ', topic);
-        setTimeout(getFilterMessages, global.messageTimer, filterID, groupName);
-        clearPrevSession(topic);
+        let messageTimer = setTimeout(getFilterMessages, global.messageTimer, filterID, groupName);
+        global.messageTimers.set(filterID, messageTimer);
+        prevSessionTimeout(topic, oldFilterID);
     });
 }
-//
+//Handle END message received
+//Sets the group channel as expired as it should no longer receive new messages for that channel
+//Clears the session data
 function handleEnd(topic){
     let groupName = global.activeTopics.get(topic);
     let groupChannel = global.groupChannels.get(groupName);
@@ -216,13 +224,22 @@ function handleEnd(topic){
     groupChannel.messages.push('End of session');
     groupChannel.isExpired = true;
     global.groupChannels.set(groupName, groupChannel);
-    clearPrevSession(topic);
+    prevSessionTimeout(topic, groupChannel.filterID);
 }
-//
-function clearPrevSession(topic){
-    //TODO: Wait for X seconds
-    //TODO: clear message filter
-    //TODO: stop message timeout loop
-    //TODO: Remove topic from groupchannel map
+//Wait set amount seconds then clear session data
+//To ensure all nodes are given reasonable time to REKEY if necessary
+function prevSessionTimeout(topic, messageFilterID, messageTimer){
+    setTimeout(clearSessionData, 12000, topic, messageFilterID);
 }
+//Message timer is cleared, message filter for topic is deleted and activeTopics map updated accordingly
+function clearSessionData(topic, filterID)  {
+    let messageTimer = global.messageTimers.get(filterID);
+    if(messageTimer) {
+        clearTimeout(messageTimer);
+        console.log('Cleared message timer for ', topic);
+    }
+    web3.shh.deleteMessageFilter(filterID).then(console.log('Deleted filter for topic: ',topic));
+    global.activeTopics.delete(topic);
+}
+
 module.exports = {subscribeApp,post, postFile,postPublicKey, createFilter, getFilterMessages};

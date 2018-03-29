@@ -7,7 +7,7 @@ const web3 = new Web3(
 const shh = web3.shh;
 
 let whisper = require('./whisper');
-const SESSION_TIMEOUT = 18000; //18 seconds
+const SESSION_TIMEOUT = 50000; //50 seconds
 
 //Returns noMembers Topics and a SessionKey
 function generateSessionData(noMembers, callback) {
@@ -46,7 +46,8 @@ function sendInit(topics, groupContacts, sessionK, name, nodeNo){
         }
     }
 }
-//
+//Send REKEY message to all memebers
+//Message includes new session data (topics and sessionK)
 function sendRekey(prevTopics, prevK, sessionK, topics){
     web3.shh.addSymKey(prevK, (err, id) => {
         for (let i=1; i<prevTopics.length;i++) { //Skip topic[0] since group controller
@@ -55,7 +56,8 @@ function sendRekey(prevTopics, prevK, sessionK, topics){
         }
     });
 }
-//
+//Send END message to members at given topics
+//This can be called due to group controller leaving or due to member(s) being removed
 function sendEnd(topics, sessionK){
     web3.shh.addSymKey(sessionK, (err,id) => {
         for (let topic of topics) {
@@ -78,18 +80,20 @@ function triggerRekey(topic) {
     generateSessionData(groupSize, (newTopics, newSessionK) => {
         sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics);
         let nodeTopic = newTopics[nodeNo];
+        let oldFilterID = groupChannel.filterID;
         whisper.createFilter(newTopics[0], newSessionK, (filterID) => {
             let newSessionData = groupChannel;
             newSessionData.filterID = filterID;
             newSessionData.topics = newTopics;
             newSessionData.sessionK = newSessionK;
             newSessionData.timeout = setTimeout(triggerRekey, SESSION_TIMEOUT, nodeTopic);
-            setTimeout(whisper.getFilterMessages, global.messageTimer, filterID, groupName);
+            let messageTimer = setTimeout(whisper.getFilterMessages, global.messageTimer, filterID, groupName);
+            global.messageTimers.set(filterID, messageTimer);
             global.activeTopics.set(nodeTopic, groupName);
             global.groupChannels.set(groupName, newSessionData);
             console.log('Rekey - updated groups');
             //Remove the previous session details
-            clearPrevSession(topic);
+            prevSessionTimeout(topic, oldFilterID);
         });
     });
 }
@@ -98,9 +102,20 @@ function getNewMessages(groupName) {
     let filterID = global.groupChannels.get(groupName).filterID;
     whisper.getFilterMessages(filterID, groupName);
 }
-function clearPrevSession(topic){
-    //TODO:Set timer when triggered: (Allows other members to handle rekey)
-    //TODO: delete message filters
-   // global.activeTopics.delete(topic);
+//Wait set amount seconds then clear session data
+//To ensure all nodes are given reasonable time to REKEY if necessary
+function prevSessionTimeout(topic, messageFilterID, messageTimer){
+    setTimeout(clearSessionData, 12000, topic, messageFilterID);
 }
-module.exports = {generateSessionData, getNewKeys, sendInit, sendRekey, sendEnd,triggerRekey,clearPrevSession, getNewMessages};
+//Message timer is cleared, message filter for topic is deleted and activeTopics map updated accordingly
+function clearSessionData(topic, filterID)  {
+    let messageTimer = global.messageTimers.get(filterID);
+    if(messageTimer) {
+        clearTimeout(messageTimer);
+        console.log('Cleared message timer for ', topic);
+    }
+    web3.shh.deleteMessageFilter(filterID).then(console.log('Deleted filter for topic: ',topic));
+    global.activeTopics.delete(topic);
+}
+
+module.exports = {generateSessionData, getNewKeys, sendInit, sendRekey, sendEnd,triggerRekey, prevSessionTimeout, getNewMessages};

@@ -23,7 +23,7 @@ router.get('/', function(req, res, next) {
 			whisper.subscribeApp(id, global.topicInit);
 		});
 	}
-  	res.render('index', {messageStorage:global.messageStorage.slice().reverse(), groupChannels:global.groupChannels, contacts:global.contacts});
+  res.render('index', {messageStorage:global.messageStorage.slice().reverse(), groupChannels:global.groupChannels, contacts:global.contacts});
 });
 
 router.post('/contact', (req, res) => {
@@ -53,7 +53,8 @@ router.post('/createGroup', (req,res) => {
 				let sessionData = {topics: topics, sessionK: sessionK, nodeNo: 0, messages: [], seqNo: 0,
 					memberInfo:memberInfo, filterID:filterID, isExpired:false};
 				sessionData.timeout = setTimeout(session.triggerRekey, INIT_TIMEOUT, nodeTopic); //12 seconds
-				setTimeout(session.getNewMessages, global.messageTimer, name);
+                let messageTimer = setTimeout(session.getNewMessages, global.messageTimer, name);
+                global.messageTimers.set(filterID, messageTimer);
 				global.groupChannels.set(name, sessionData);
 				global.activeTopics.set(nodeTopic, name);
 				console.log('Created new Group', name);

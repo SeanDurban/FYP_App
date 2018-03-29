@@ -9,7 +9,7 @@ var shh = web3.shh;
 
 const whisper = require('../source/whisper.js');
 const session = require('../source/session.js');
-const SESSION_TIMEOUT = 18000; //18 seconds
+const SESSION_TIMEOUT = 50000; //50 seconds
 
 router.get('/:name', function(req, res, next) {
 	let contacts = global.contacts;
@@ -48,6 +48,8 @@ router.post('/:name/addMember', (req, res) => {
     contactsGiven= (contactsGiven.constructor == Array)? contactsGiven:[contactsGiven];
 	console.log('Add Member ', contactsGiven);
     let groupChannel = global.groupChannels.get(groupName);
+	let oldFilterID = groupChannel.filterID;
+	let oldTopic = groupChannel.topics[groupChannel.nodeNo];
 	let newGroupSize = groupChannel.topics.length + 1;
 	let newNodeNo = groupChannel.topics.length;
 	//Clear current timeout
@@ -65,12 +67,13 @@ router.post('/:name/addMember', (req, res) => {
             newSessionData.topics = newTopics;
             newSessionData.sessionK = newSessionK;
             newSessionData.timeout = setTimeout(session.triggerRekey, SESSION_TIMEOUT, newTopics[0]);
-            setTimeout(whisper.getFilterMessages, global.messageTimer, filterId, groupName);
+            let messageTimer = setTimeout(whisper.getFilterMessages, global.messageTimer, filterID, groupName);
+            global.messageTimers.set(filterID, messageTimer);
             global.activeTopics.set(newTopics[0], groupName);
             global.groupChannels.set(groupName, newSessionData);
 
             //Clear prev session
-            session.clearPrevSession(groupChannel.topics[0]);
+            session.prevSessionTimeout(oldTopic, oldFilterID);
         });
     });
     res.redirect('/session/'+groupName);
@@ -82,6 +85,8 @@ router.post('/:name/removeMember', (req, res) => {
     memberSelect= (memberSelect.constructor == Array)? memberSelect:[memberSelect];
     console.log('Remove Member ',memberSelect);
     let groupChannel = global.groupChannels.get(groupName);
+    let oldFilterID = groupChannel.filterID;
+    let oldTopic = groupChannel.topics[groupChannel.nodeNo];
     let newGroupSize = groupChannel.topics.length - 1;
     //TODO: extend this to multiple group members
     let removedNo = groupChannel.memberInfo[memberSelect[0]];
@@ -94,7 +99,6 @@ router.post('/:name/removeMember', (req, res) => {
     clearTimeout(groupChannel.timeout);
     session.generateSessionData(newGroupSize, (newTopics, newSessionK) => {
         session.sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics);
-        whisper.subscribeWithKey(newTopics[0], newSessionK);
         whisper.createFilter(newTopics[0], newSessionK, (filterID) => {
             let newSessionData = groupChannel;
             //Update memberInfo (nodeNo may have changed)
@@ -107,12 +111,13 @@ router.post('/:name/removeMember', (req, res) => {
             newSessionData.topics = newTopics;
             newSessionData.sessionK = newSessionK;
             newSessionData.timeout = setTimeout(session.triggerRekey, SESSION_TIMEOUT, newTopics[0]);
-            setTimeout(whisper.getFilterMessages, global.messageTimer, filterId, groupName);
+            let messageTimer = setTimeout(whisper.getFilterMessages, global.messageTimer, filterID, groupName);
+            global.messageTimers.set(filterID, messageTimer);
             global.activeTopics.set(newTopics[0], groupName);
             global.groupChannels.set(groupName, newSessionData);
 
             //Clear prev session
-            session.clearPrevSession(groupChannel.topics[0]);
+            session.prevSessionTimeout(oldTopic, oldFilterID);
         });
     } );
     res.redirect('/session/'+groupName);

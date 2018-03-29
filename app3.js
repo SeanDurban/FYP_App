@@ -14,6 +14,7 @@ global.contacts = new Map();
 global.activeTopics = new Map();
 global.groupChannels = new Map();
 global.messageStorage = [];
+global.messageTimers = new Map();
 //App details
 global.nodeWS = 'ws://localhost:8546';
 global.topicInit = '0xffddaa11';
