@@ -21,14 +21,27 @@ router.get('/', function(req, res, next) {
 			var contactInfo = {topic: global.topicInit, pubKey:pk };
 			global.contacts.set('Me', contactInfo);
 			whisper.subscribeApp(id, global.topicInit);
+			web3.shh.setMaxMessageSize(10000000).then(console.log);
 		});
 	}
-  res.render('index', {messageStorage:global.messageStorage.slice().reverse(), groupChannels:global.groupChannels, contacts:global.contacts});
+  res.render('index', {messageStorage:global.messageStorage.slice().reverse(), groupChannels:global.groupChannels, contacts:global.contacts,err: req.flash('err'),succ: req.flash('succ')});
+});
+
+router.post('/pow', (req,res) => {
+	web3.shh.setMinPoW(parseFloat(req.body.pow), (err) =>{
+		if(err){
+			req.flash('err',err);
+			return res.redirect('/');
+		}
+		req.flash('succ', 'Succesfully Changed PoW level to: '+req.body.pow);
+		return res.redirect('/');
+	});
 });
 
 router.post('/contact', (req, res) => {
     let name = req.body.name;
     let contactInfo = {topic: global.topicInit, pubKey: req.body.publicKey};
+    //TODO: Add min PoW to contact info
     global.contacts.set(name, contactInfo);
 	console.log('Added contact ',name);
     res.redirect('/');

@@ -6,3 +6,7 @@ body {
 a {
   color: #00B7FF;
 }
+
+#ex1Slider .slider-selection {
+  background: #BABABA;
+}

@@ -23,7 +23,7 @@ router.get('/:name', function(req, res, next) {
     if(groupChannel.isExpired){
         isExpired = true;
     }
-  	res.render('session',{name: groupName, messages:groupChannel.messages.slice().reverse(), groupMembers, contacts, isExpired});
+  	res.render('session',{name: groupName, messages:groupChannel.messages.slice().reverse(), groupMembers, contacts, isExpired,err: req.flash('err'),succ: req.flash('succ') });
 });
 
 router.post('/:name', (req, res) => {
