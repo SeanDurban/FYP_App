@@ -42,6 +42,21 @@ router.post('/:name', (req, res) => {
 	});
 });
 
+router.post('/:name/file', (req, res) => {
+	let file = req.files.file;
+	let groupName= req.params.name;
+	let groupChannel = global.groupChannels.get(groupName);
+	let sessionK = groupChannel.sessionK;
+	web3.shh.addSymKey(sessionK, (err, id) => {
+		for(let topic of groupChannel.topics) {
+			whisper.postFile(topic, id, file);
+		}
+		groupChannel.seqNo++;
+		global.groupChannels.set(groupName,groupChannel);
+		res.redirect('/session/'+groupName);
+	});
+});
+
 router.post('/:name/addMember', (req, res) => {
     let groupName= req.params.name;
     let contactsGiven = req.body.contactSelect;

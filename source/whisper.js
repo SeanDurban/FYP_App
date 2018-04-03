@@ -1,7 +1,8 @@
 const Web3 = require('web3');
 const crypto = require('crypto');
 const fs = require('fs');
-
+const path = require('path');
+const buffer = require('buffer');
 const web3 = new Web3(
     new Web3.providers.WebsocketProvider(global.nodeWS)
 );
@@ -78,7 +79,11 @@ function getFilterMessages(filterID, groupName){
                     }
                     else if (payload[0] == 'END') {
                         handleEnd(topic);
-                    } else {
+                    }
+                    else if(payload[0] == 'FILE'){
+                        handleFile(topic, payload);
+                    }
+                    else {
                         handleMessage(topic, payload);
                     }
                 }
@@ -112,30 +117,26 @@ function post(topic, keyID, message) {
 }
 //Function for sending files in hex format
 //Files limited to 10mb by underlying DEVp2p transport
-function postFile(topic, keyID, filePath) {
-    fs.readFile(filePath, 'utf8', (err,data)=>{
-        if(err) {
-            console.log('error readFile: ', err);
-        }
-        let message = web3.utils.toHex(data); //Post assumes payload in hex string with 0x prefix
-        message = 'FILE||'+message
-        web3.shh.post(
-            {
-                symKeyID: keyID, // encrypts using the sym key ID
-                ttl: 20,
-                topic: topic,
-                payload: message,
-                powTime: 3,
-                powTarget: 0.5
-            }, (err2, res) => {
-                if (err2) {
-                    console.log('err postFile: ', err2);
-                } else{
-                    console.log('Sent File : ', filePath);
-                }
+function postFile(topic, keyID, file) {
+	let fileData= file.data.toString('hex');
+    let message = 'FILE||'+file.name+'||'+fileData;
+    message = web3.utils.toHex(message);
+	web3.shh.post(
+        {
+            symKeyID: keyID, // encrypts using the sym key ID
+            ttl: 80,
+            topic: topic,
+            payload: message,
+            powTime: 40,
+            powTarget: 0.3
+        }, (err2, res) => {
+            if (err2) {
+                console.log('err postFile: ', err2);
+            } else{
+                console.log('Sent File : ', file.name);
             }
-        );
-    });
+        }
+    );
 }
 //Send message with asymmetric key and topic
 function postPublicKey(topic, pK, message) {
@@ -185,7 +186,6 @@ function handleMessage(topic, payload) {
         groupChannel.messages.push(message);
         groupChannel.seqNo++;
         global.groupChannels.set(groupName, groupChannel);
-        console.log('Updated Group Channels map');
     }
 }
 
@@ -226,6 +226,31 @@ function handleEnd(topic){
     global.groupChannels.set(groupName, groupChannel);
     prevSessionTimeout(topic, groupChannel.filterID);
 }
+
+function handleFile(topic, payload){
+    let fileData = Buffer.from(payload[2], 'hex');
+	let groupName = global.activeTopics.get(topic);
+	let fileName = groupName+'_'+payload[1];
+	let filePath = path.join(__dirname, '../data/');
+	filePath = path.join(filePath,fileName);
+	fs.writeFile(filePath, fileData, (err) => {
+	   if(err) {
+		   console.log('Err Handle File err',err);
+		   return;
+	   }
+		let fileMsg = 'File from topic ( ' + topic + ' ): ' + fileName;
+		global.messageStorage.push(fileMsg);
+		//update global groupChannels map
+		let groupName = global.activeTopics.get(topic);
+		let groupChannel = global.groupChannels.get(groupName);
+		if (groupChannel) {
+			groupChannel.messages.push(fileMsg);
+			groupChannel.seqNo++;
+			global.groupChannels.set(groupName, groupChannel);
+		}
+	});
+}
+
 //Wait set amount seconds then clear session data
 //To ensure all nodes are given reasonable time to REKEY if necessary
 function prevSessionTimeout(topic, messageFilterID, messageTimer){

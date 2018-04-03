@@ -6,6 +6,7 @@ var bodyParser = require('body-parser');
 var http = require("http");
 var flash = require('connect-flash');
 var session = require('express-session');
+var fileUpload = require('express-fileupload');
 
 var app = express();
 
@@ -35,7 +36,7 @@ resave: true,
 saveUninitialized: true
 }));
 app.use(flash());
-
+app.use(fileUpload());
 
 const index = require('./routes/index');
 const sessionRoute = require('./routes/session');
