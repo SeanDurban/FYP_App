@@ -1,10 +1,5 @@
-const Web3 = require('web3');
 const crypto = require('crypto');
-
-const web3 = new Web3(
-    new Web3.providers.WebsocketProvider(global.nodeWS)
-);
-const shh = web3.shh;
+var web3 = global.web3;
 
 let whisper = require('./whisper');
 const SESSION_TIMEOUT = 50000; //50 seconds

@@ -1,12 +1,7 @@
 var express = require('express');
 var router = express.Router();
-var Web3 = require('web3');
 var crypto = require('crypto');
-
-var web3 = new Web3(
-	new Web3.providers.WebsocketProvider(global.nodeWS)
-);
-var shh = web3.shh;
+var web3 = global.web3;
 
 const whisper = require('../source/whisper');
 const session = require('../source/session');
@@ -21,7 +16,6 @@ router.get('/', function(req, res, next) {
 			var contactInfo = {topic: global.topicInit, pubKey:pk };
 			global.contacts.set('Me', contactInfo);
 			whisper.subscribeApp(id, global.topicInit);
-			web3.shh.setMaxMessageSize(10000000).then(console.log);
 		});
 	}
   res.render('index', {messageStorage:global.messageStorage.slice().reverse(), groupChannels:global.groupChannels, contacts:global.contacts,err: req.flash('err'),succ: req.flash('succ')});

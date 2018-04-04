@@ -7,9 +7,19 @@ var http = require("http");
 var flash = require('connect-flash');
 var session = require('express-session');
 var fileUpload = require('express-fileupload');
+var net = require('net');
+var Web3 = require('web3');
 
 var app = express();
-
+let wsAddresses = ['8546','8544','8543'];
+let args = process.argv.slice(2);
+console.log(args);
+if(!args){
+  throw "You must provide the node no as parameter eg) node app.js 1";
+}
+if(args[1] && args[1] == 'DEV'){
+	wsAddresses = ['8546','8546','8546'];
+}
 //global vars
 global.contacts = new Map();
 global.activeTopics = new Map();
@@ -17,9 +27,16 @@ global.groupChannels = new Map();
 global.messageStorage = [];
 global.messageTimers = new Map();
 //App details
-global.nodeWS = 'ws://localhost:8546';
+global.nodeWS = 'ws://localhost:'+wsAddresses[args[0]-1];
 global.topicInit = '0xffddaa11';
 global.messageTimer = 5000; //5 secs
+
+
+if(args[0] == '1') {
+	global.web3 = new Web3(new Web3.providers.IpcProvider('\\\\.\\pipe\\geth.ipc', net));
+} else {
+	global.web3 = new Web3(new Web3.providers.WebsocketProvider(global.nodeWS));
+}
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -64,8 +81,8 @@ app.use(function(err, req, res, next) {
 
 //Create Server and listen on port 3000
 var httpServer = http.createServer(app);
-httpServer.listen(4000, function() {
-  console.log("Server listening on port 4000");
+httpServer.listen(4000+(args[0]-1), function() {
+  console.log("Server listening on port 400"+(args[0]-1));
 });
 
 

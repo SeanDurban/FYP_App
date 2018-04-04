@@ -1,12 +1,8 @@
-const Web3 = require('web3');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const buffer = require('buffer');
-const web3 = new Web3(
-    new Web3.providers.WebsocketProvider(global.nodeWS)
-);
-const shh = web3.shh;
+const web3 = global.web3;
 
 //This subscribes to a topic with a symmetric key provided
 //This method is used in the group sessions/channels
@@ -124,11 +120,11 @@ function postFile(topic, keyID, file) {
 	web3.shh.post(
         {
             symKeyID: keyID, // encrypts using the sym key ID
-            ttl: 80,
+            ttl: 100,
             topic: topic,
             payload: message,
-            powTime: 40,
-            powTarget: 0.3
+            powTime: 50,
+            powTarget: 0.2
         }, (err2, res) => {
             if (err2) {
                 console.log('err postFile: ', err2);
