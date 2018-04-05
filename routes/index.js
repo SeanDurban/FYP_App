@@ -6,19 +6,11 @@ var web3 = global.web3;
 const whisper = require('../source/whisper');
 const session = require('../source/session');
 
-var appKeyId;
 const INIT_TIMEOUT = 25000;  //25 seconds
 
 router.get('/', function(req, res, next) {
-	if(!appKeyId){
-		session.getNewKeys((id,pk) => {
-			appKeyId = id;
-			var contactInfo = {topic: global.topicInit, pubKey:pk };
-			global.contacts.set('Me', contactInfo);
-			whisper.subscribeApp(id, global.topicInit);
-		});
-	}
-  res.render('index', {messageStorage:global.messageStorage.slice().reverse(), groupChannels:global.groupChannels, contacts:global.contacts,err: req.flash('err'),succ: req.flash('succ')});
+  res.render('index', {messageStorage:global.messageStorage.slice().reverse(), groupChannels:global.groupChannels,
+	  contacts:global.contacts, nodeInfo:global.nodeInfo, err: req.flash('err'),succ: req.flash('succ')});
 });
 
 router.post('/pow', (req,res) => {

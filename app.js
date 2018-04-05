@@ -5,7 +5,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var http = require("http");
 var flash = require('connect-flash');
-var session = require('express-session');
+var express_session = require('express-session');
 var fileUpload = require('express-fileupload');
 var net = require('net');
 var Web3 = require('web3');
@@ -30,13 +30,17 @@ global.messageTimers = new Map();
 global.nodeWS = 'ws://localhost:'+wsAddresses[args[0]-1];
 global.topicInit = '0xffddaa11';
 global.messageTimer = 5000; //5 secs
-
+global.SESSION_TIMEOUT = 50000; //50 seconds
+global.nodeInfo = {};
 
 if(args[0] == '1') {
-	global.web3 = new Web3(new Web3.providers.IpcProvider('\\\\.\\pipe\\geth.ipc', net));
+  global.web3 = new Web3(new Web3.providers.IpcProvider('\\\\.\\pipe\\geth.ipc', net));
 } else {
-	global.web3 = new Web3(new Web3.providers.WebsocketProvider(global.nodeWS));
+  global.web3 = new Web3(new Web3.providers.WebsocketProvider(global.nodeWS));
 }
+
+const session = require('./source/session');
+session.appSetup();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -48,7 +52,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 //Session storage
 app.use(cookieParser('secret'));
-app.use(session({ secret: 'secret',
+app.use(express_session({ secret: 'secret',
 resave: true,
 saveUninitialized: true
 }));

@@ -19,12 +19,22 @@
         <% } %>
 
 		<h2><%=name%></h2>
-		<br></br>
-
+        <% if(groupInfo && groupInfo.size) { %>
+		<div class="row">
+			<div class="col">
+				<h6>Group Info</h6>
+				<p>
+					Group Size: <%=groupInfo.size%><br>
+					Total Messages <%=groupInfo.noMessages%><br>
+					Group minimum PoW: <%=groupInfo.minPow%>
+				</p>
+				<hr></hr>
+			</div>
+		</div>
+        <% } %>
 				<% if(!isExpired) { %>
 				<% if(groupMembers && groupMembers.length>0) { %>
 					<a href="#addMemberModal" class="btn btn-info btn-sm" data-toggle="modal">Add Group Member</a>
-				<br></br>
 					<a href="#removeMemberModal" class="btn btn-info btn-sm" data-toggle="modal">Remove Group Member</a>
 					<br><br>
 				<% } else {%>
@@ -42,7 +52,7 @@
 					<div class="form-row">
 						<div class="form-group col-md-6">
 							<label for="inputMessage">Message</label>
-							<textarea type="text" class="form-control" name="inputMessage" value=""/> </textarea>
+							<textarea type="text" class="form-control" name="inputMessage" value=""> </textarea>
 						</div>
 					</div>
 

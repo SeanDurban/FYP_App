@@ -4,7 +4,6 @@ var web3 = global.web3;
 
 const whisper = require('../source/whisper.js');
 const session = require('../source/session.js');
-const SESSION_TIMEOUT = 50000; //50 seconds
 
 router.get('/:name', function(req, res, next) {
 	let contacts = global.contacts;
@@ -18,7 +17,9 @@ router.get('/:name', function(req, res, next) {
     if(groupChannel.isExpired){
         isExpired = true;
     }
-  	res.render('session',{name: groupName, messages:groupChannel.messages.slice().reverse(), groupMembers, contacts, isExpired,err: req.flash('err'),succ: req.flash('succ') });
+    let groupInfo = {size:groupChannel.topics.length, noMessages:groupChannel.messages.length, minPow:0.2};
+  	res.render('session',{name: groupName, messages:groupChannel.messages.slice().reverse(), groupMembers, contacts,
+		groupInfo,isExpired,err: req.flash('err'),succ: req.flash('succ') });
 });
 
 router.post('/:name', (req, res) => {
@@ -76,7 +77,7 @@ router.post('/:name/addMember', (req, res) => {
             newSessionData.filterID = filterID;
             newSessionData.topics = newTopics;
             newSessionData.sessionK = newSessionK;
-            newSessionData.timeout = setTimeout(session.triggerRekey, SESSION_TIMEOUT, newTopics[0]);
+            newSessionData.timeout = setTimeout(session.triggerRekey, global.SESSION_TIMEOUT, newTopics[0]);
             let messageTimer = setTimeout(whisper.getFilterMessages, global.messageTimer, filterID, groupName);
             global.messageTimers.set(filterID, messageTimer);
             global.activeTopics.set(newTopics[0], groupName);
@@ -120,7 +121,7 @@ router.post('/:name/removeMember', (req, res) => {
             newSessionData.filterID = filterID;
             newSessionData.topics = newTopics;
             newSessionData.sessionK = newSessionK;
-            newSessionData.timeout = setTimeout(session.triggerRekey, SESSION_TIMEOUT, newTopics[0]);
+            newSessionData.timeout = setTimeout(session.triggerRekey, global.SESSION_TIMEOUT, newTopics[0]);
             let messageTimer = setTimeout(whisper.getFilterMessages, global.messageTimer, filterID, groupName);
             global.messageTimers.set(filterID, messageTimer);
             global.activeTopics.set(newTopics[0], groupName);

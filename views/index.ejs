@@ -20,8 +20,22 @@
         <% } %>
 
 		<h2 style="margin-bottom: 40px;margin-top: auto;">Whisper App</h2>
+		<% if(nodeInfo && nodeInfo.pubKey) { %>
+		<div class="row">
+			<div class="col">
+				<h6>Node Info</h6>
+				<p>
+					Topic: <%=nodeInfo.topic%><br>
+					Min PoW: <%=nodeInfo.minPow%><br>
+					Public Key: <%=nodeInfo.pubKey%>
+				</p>
+				<hr></hr>
+			</div>
+		</div>
 
+		<% } %>
 		<input id="ex1" data-slider-id='ex1Slider' type="text" data-slider-min="0" data-slider-max="1" data-slider-step="0.2" data-slider-value="0.3"/>
+		<br></br>
 		<div class="row">
 			<h6 style="margin-right: 15px;">PoW level</h6>
 			<form action="/pow" method="post" id='powForm'>
@@ -39,7 +53,6 @@
 		</div>
 		<hr></hr>
 				<a href="#contactModal" class="btn btn-info btn-sm" data-toggle="modal">Add Contact</a>
-				<br><br>
                 <a href="#createGroupModal" class="btn btn-info btn-sm" data-toggle="modal">Create Group</a>
                 <br><br>
 				<h5>Active Groups</h5>

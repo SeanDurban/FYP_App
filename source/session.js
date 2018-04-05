@@ -2,7 +2,6 @@ const crypto = require('crypto');
 var web3 = global.web3;
 
 let whisper = require('./whisper');
-const SESSION_TIMEOUT = 50000; //50 seconds
 
 //Returns noMembers Topics and a SessionKey
 function generateSessionData(noMembers, callback) {
@@ -14,6 +13,18 @@ function generateSessionData(noMembers, callback) {
             }
             callback(topics, key);
         })
+    });
+}
+function appSetup(){
+    web3.shh.getInfo((err,info) => {
+        if(err)
+            throw err;
+        getNewKeys((id, pubKey) => {
+			var contactInfo = {topic: global.topicInit, pubKey:pubKey };
+			global.contacts.set('Me', contactInfo);
+			global.nodeInfo = {minPow:info.minPow, pubKey:pubKey, topic:global.topicInit, keyID:id};
+			whisper.subscribeApp(id, global.topicInit);
+        });
     });
 }
 //Generate new key pair for app
@@ -81,7 +92,7 @@ function triggerRekey(topic) {
             newSessionData.filterID = filterID;
             newSessionData.topics = newTopics;
             newSessionData.sessionK = newSessionK;
-            newSessionData.timeout = setTimeout(triggerRekey, SESSION_TIMEOUT, nodeTopic);
+            newSessionData.timeout = setTimeout(triggerRekey, global.SESSION_TIMEOUT, nodeTopic);
             let messageTimer = setTimeout(whisper.getFilterMessages, global.messageTimer, filterID, groupName);
             global.messageTimers.set(filterID, messageTimer);
             global.activeTopics.set(nodeTopic, groupName);
@@ -113,4 +124,4 @@ function clearSessionData(topic, filterID)  {
     global.activeTopics.delete(topic);
 }
 
-module.exports = {generateSessionData, getNewKeys, sendInit, sendRekey, sendEnd,triggerRekey, prevSessionTimeout, getNewMessages};
+module.exports = {generateSessionData, getNewKeys, sendInit, sendRekey, sendEnd,triggerRekey, prevSessionTimeout, getNewMessages, appSetup};
