@@ -42,11 +42,11 @@ function getNewKeys(callback){
 }
 //Send initialise message to all group members
 //Message includes all details required to participate in group channel
-function sendInit(topics, groupContacts, sessionK, name, nodeNo){
+function sendInit(topics, groupContacts, sessionK, name, nodeNo, minPow){
     for(var contact of groupContacts) {
         var contactInfo = global.contacts.get(contact);
         if(contactInfo){
-            var initMessage = `INIT||${name}||${nodeNo}||${topics}||${sessionK}`;
+            var initMessage = `INIT||${name}||${nodeNo}||${topics}||${sessionK}||${minPow}`;
             whisper.postPublicKey(contactInfo.topic, contactInfo.pubKey, initMessage);
             nodeNo++;
         }
@@ -87,7 +87,7 @@ function triggerRekey(topic) {
         sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics);
         let nodeTopic = newTopics[nodeNo];
         let oldFilterID = groupChannel.filterID;
-        whisper.createFilter(newTopics[0], newSessionK, (filterID) => {
+        whisper.createFilter(newTopics[0], newSessionK, groupChannel.minPow, (filterID) => {
             let newSessionData = groupChannel;
             newSessionData.filterID = filterID;
             newSessionData.topics = newTopics;

@@ -17,7 +17,7 @@ router.get('/:name', function(req, res, next) {
     if(groupChannel.isExpired){
         isExpired = true;
     }
-    let groupInfo = {size:groupChannel.topics.length, noMessages:groupChannel.messages.length, minPow:0.2};
+    let groupInfo = {size:groupChannel.topics.length, noMessages:groupChannel.messages.length, minPow:groupChannel.minPow};
   	res.render('session',{name: groupName, messages:groupChannel.messages.slice().reverse(), groupMembers, contacts,
 		groupInfo,isExpired,err: req.flash('err'),succ: req.flash('succ') });
 });
@@ -68,7 +68,7 @@ router.post('/:name/addMember', (req, res) => {
 	session.generateSessionData(newGroupSize, (newTopics, newSessionK) => {
 	    session.sendInit(newTopics, contactsGiven, newSessionK, groupName, newNodeNo);
 	    session.sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics);
-        whisper.createFilter(newTopics[0], newSessionK, (filterID) => {
+        whisper.createFilter(newTopics[0], newSessionK, groupChannel.minPow, (filterID) => {
             //Update Maps
             let newSessionData = groupChannel;
             for(let i =0 ; i<contactsGiven.length; i++){
@@ -110,7 +110,7 @@ router.post('/:name/removeMember', (req, res) => {
     clearTimeout(groupChannel.timeout);
     session.generateSessionData(newGroupSize, (newTopics, newSessionK) => {
         session.sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics);
-        whisper.createFilter(newTopics[0], newSessionK, (filterID) => {
+        whisper.createFilter(newTopics[0], newSessionK, groupChannel.minPow, (filterID) => {
             let newSessionData = groupChannel;
             //Update memberInfo (nodeNo may have changed)
             for (let name of Object.keys(groupChannel.memberInfo)) {

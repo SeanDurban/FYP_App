@@ -120,6 +120,12 @@
 							</div>
 							<div class="form-row">
 								<div class="form-group col-md-6">
+									<label for="groupPow">Group Min PoW</label>
+									<input type="number" class="form-control" name="minPow" min="0" max="100" value="<%=nodeInfo.minPow%>"/>
+								</div>
+							</div>
+							<div class="form-row">
+								<div class="form-group col-md-6">
 									<label for="contactSelect">Members</label>
                                     <select id="contactSelect" multiple="multiple" name="contactSelect" required>
                                         <%if(contacts) { %>

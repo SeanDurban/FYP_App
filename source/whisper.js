@@ -45,17 +45,17 @@ function subscribeApp(keyID, topic){
     console.log('App subscribed to: ', topic);
 }
 //
-function createFilter(topic,key, callback){
+function createFilter(topic, key, minPow, callback){
     web3.shh.addSymKey(key,(err,keyID) => {
         let filter =web3.shh.newMessageFilter({
             symKeyID: keyID,
             topics: [topic],
-            minPow: 0.2,
+            minPow: parseFloat(minPow),
             allowP2P: true
         }).then((id) => {
            callback(id);
         });
-        console.log('Message Filter created for topic: ', topic);
+        console.log('Message Filter created for topic and minPoW: ', topic, ' ',minPow);
     });
 }
 //Regularly polls a message filter for new messages
@@ -67,7 +67,7 @@ function getFilterMessages(filterID, groupName){
         web3.shh.getFilterMessages(filterID).then((envelopes) => {
             if (envelopes && envelopes.length > 0) {
                 for (let envelope of envelopes) {
-                    console.log('New message received for ', envelope.topic);
+                    console.log('New message received for ', envelope.topic, ' | ', envelope.pow);
                     let payload = web3.utils.hexToAscii(envelope.payload).split('||');
                     let topic = envelope.topic;
                     if (payload[0] == 'REKEY') {
@@ -84,7 +84,7 @@ function getFilterMessages(filterID, groupName){
                     }
                 }
             } else {
-                console.log('No new messages for :', groupName);
+              //  console.log('No new messages for :', groupName);
             }
             let messageTimer = setTimeout(getFilterMessages, global.messageTimer, filterID, groupName);
             global.messageTimers.set(filterID, messageTimer);
@@ -94,6 +94,7 @@ function getFilterMessages(filterID, groupName){
 //Send message with symmetric key with topic and key ID provided
 //Assumes message in ASCII format
 function post(topic, keyID, message) {
+    console.time('message'+topic+x);
     web3.shh.post(
         {
             symKeyID: keyID, // encrypts using the sym key ID
@@ -103,6 +104,7 @@ function post(topic, keyID, message) {
             powTime: 3,
             powTarget: 0.5
         }, (err, res) => {
+            console.timeEnd('message'+topic+x);
             if (err) {
                 console.log('err post: ', err);
             } else{
@@ -117,15 +119,17 @@ function postFile(topic, keyID, file) {
 	let fileData= file.data.toString('hex');
     let message = 'FILE||'+file.name+'||'+fileData;
     message = web3.utils.toHex(message);
+	console.time('file'+topic);
 	web3.shh.post(
         {
             symKeyID: keyID, // encrypts using the sym key ID
-            ttl: 100,
+            ttl: 50,
             topic: topic,
             payload: message,
             powTime: 50,
             powTarget: 0.2
         }, (err2, res) => {
+            console.timeEnd('file'+topic);
             if (err2) {
                 console.log('err postFile: ', err2);
             } else{
@@ -160,9 +164,11 @@ function setupSession(message){
     let nodeNo = message[2];
     let topics = message[3].split(',');
     let sessionK = message[4];
+    let minPow = message[5];
     let sessionTopic = topics[nodeNo];
-    createFilter(sessionTopic, sessionK, (filterID) => {
-        let sessionData = {topics: topics, sessionK: sessionK, nodeNo: nodeNo, messages: [], name: groupName, seqNo: 0, filterID:filterID, isExpired:false};
+    createFilter(sessionTopic, sessionK, minPow, (filterID) => {
+        let sessionData = {topics: topics, sessionK: sessionK, nodeNo: nodeNo, messages: [], name: groupName,
+            seqNo: 0, filterID:filterID, isExpired:false, minPow:minPow};
         let messageTimer = setTimeout(getFilterMessages, global.messageTimer, filterID, groupName);
         global.messageTimers.set(filterID, messageTimer);
         global.groupChannels.set(groupName, sessionData);
@@ -196,7 +202,7 @@ function handleRekey(topic, payload) {
 	let groupName = global.activeTopics.get(topic);
 	let groupChannel = global.groupChannels.get(groupName);
     let oldFilterID = groupChannel.filterID;
-    createFilter(newNodeTopic, newSessionK, (filterID) => {
+    createFilter(newNodeTopic, newSessionK, groupChannel.minPow, (filterID) => {
         groupChannel.filterID =filterID;
         groupChannel.topics = newTopics;  //Only update updated details, keep messages/seqNo
         groupChannel.sessionK = newSessionK;

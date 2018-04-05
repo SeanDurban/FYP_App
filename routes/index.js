@@ -38,19 +38,20 @@ router.post('/createGroup', (req,res) => {
 	if(contactsGiven) {
 		contactsGiven= (contactsGiven.constructor == Array)? contactsGiven:[contactsGiven];
         let name = req.body.groupName;
+        let minPow = req.body.minPow;
         session.generateSessionData(contactsGiven.length + 1, (topics, sessionK) => {
             //Group initiator is controller and always nodeNo 0
-        	session.sendInit(topics, contactsGiven, sessionK, name, 1);
+        	session.sendInit(topics, contactsGiven, sessionK, name, 1, minPow);
             let nodeTopic = topics[0];
-            whisper.createFilter(nodeTopic,sessionK, (filterID) => {
+            whisper.createFilter(nodeTopic,sessionK, minPow, (filterID) => {
 				//Update all relevant maps
-				//Must record positions of contacts in group for add/remove
+				//Must record nodeNo of contacts in group for add/remove
 				let memberInfo = {};
 				for(let nodeNo =0 ; nodeNo<contactsGiven.length; nodeNo++){
 					memberInfo[contactsGiven[nodeNo]] = nodeNo+1;
 				}
 				let sessionData = {topics: topics, sessionK: sessionK, nodeNo: 0, messages: [], seqNo: 0,
-					memberInfo:memberInfo, filterID:filterID, isExpired:false};
+					memberInfo:memberInfo, filterID:filterID, isExpired:false, minPow:minPow};
 				sessionData.timeout = setTimeout(session.triggerRekey, INIT_TIMEOUT, nodeTopic); //12 seconds
                 let messageTimer = setTimeout(session.getNewMessages, global.messageTimer, name);
                 global.messageTimers.set(filterID, messageTimer);
