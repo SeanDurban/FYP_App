@@ -33,9 +33,10 @@
 		</div>
         <% } %>
 				<% if(!isExpired) { %>
-				<% if(groupMembers && groupMembers.length>0) { %>
+				<% if(isGroupController) { %>
 					<a href="#addMemberModal" class="btn btn-info btn-sm" data-toggle="modal">Add Group Member</a>
 					<a href="#removeMemberModal" class="btn btn-info btn-sm" data-toggle="modal">Remove Group Member</a>
+					<a href="/session/<%=name%>/end" class="btn btn-primary btn-sm">End Group</a>
 					<br><br>
 				<% } else {%>
 					<a href="/session/<%=name%>/exit" class="btn btn-info btn-sm">Leave Group</a>

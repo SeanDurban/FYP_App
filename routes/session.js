@@ -6,20 +6,22 @@ const whisper = require('../source/whisper.js');
 const session = require('../source/session.js');
 
 router.get('/:name', function(req, res, next) {
-	let contacts = global.contacts;
 	let groupName= req.params.name;
 	let groupChannel = global.groupChannels.get(groupName);
+	if(!groupChannel){
+		req.flash('err', 'This group does not exist');
+		return res.redirect('/');
+	}
+	let contacts = global.contacts;
 	let groupMembers = [];
     if(groupChannel.nodeNo === 0) { //Only group controller has this field
         groupMembers = Object.keys(groupChannel.memberInfo);
     }
-    let isExpired =false;
-    if(groupChannel.isExpired){
-        isExpired = true;
-    }
+    let isExpired = (groupChannel.isExpired && groupChannel.isExpired==true)? true : false;
+    let isGroupController = groupChannel.nodeNo == 0 ? true : false;
     let groupInfo = {size:groupChannel.topics.length, noMessages:groupChannel.messages.length, minPow:groupChannel.minPow};
   	res.render('session',{name: groupName, messages:groupChannel.messages.slice().reverse(), groupMembers, contacts,
-		groupInfo,isExpired,err: req.flash('err'),succ: req.flash('succ') });
+		groupInfo,isExpired, isGroupController,err: req.flash('err'),succ: req.flash('succ') });
 });
 
 router.post('/:name', (req, res) => {

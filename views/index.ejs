@@ -34,10 +34,29 @@
 		</div>
 
 		<% } %>
+		<a href="#contactModal" class="btn btn-info btn-sm" data-toggle="modal">Add Contact</a>
+		<a href="#createGroupModal" class="btn btn-info btn-sm" data-toggle="modal">Create Group</a>
+		<br><br>
+		<h5>Active Groups</h5>
+		<table class="table table-sm table-bordered">
+			<tbody>
+            <%if(groupChannels && groupChannels.size>0) { %>
+            <% for(let name of groupChannels.keys()) {%>
+			<tr>
+				<td>
+					<a href='session/<%=name%>' target="_blank"><%=name%></a>
+				</td>
+			</tr>
+            <%	}%>
+            <% } %>
+			</tbody>
+		</table>
+		<hr></hr>
+		<h5>Node Settings</h5>
 		<input id="ex1" data-slider-id='ex1Slider' type="text" data-slider-min="0" data-slider-max="1" data-slider-step="0.2" data-slider-value="0.3"/>
 		<br></br>
+		<h6>PoW level</h6>
 		<div class="row">
-			<h6 style="margin-right: 15px;">PoW level</h6>
 			<form action="/pow" method="post" id='powForm'>
 				<select name="pow">
 					<option value="0">None (0)</option>
@@ -52,17 +71,7 @@
 			</form>
 		</div>
 		<hr></hr>
-				<a href="#contactModal" class="btn btn-info btn-sm" data-toggle="modal">Add Contact</a>
-                <a href="#createGroupModal" class="btn btn-info btn-sm" data-toggle="modal">Create Group</a>
-                <br><br>
-				<h5>Active Groups</h5>
-					<%if(groupChannels && groupChannels.size>0) { %>
-						<% for(let name of groupChannels.keys()) {%>
-						<div class="row">
-							<a href='session/<%=name%>' target="_blank"><%=name%></a>
-						</div>
-					<%	}%>
-					<% } %>
+
 				<br>
 				<h5>All Messages Received</h5>
 					<%if(messageStorage && messageStorage.length>0) { %>
@@ -121,13 +130,13 @@
 							<div class="form-row">
 								<div class="form-group col-md-6">
 									<label for="groupPow">Group Min PoW</label>
-									<input type="number" class="form-control" name="minPow" min="0" max="100" value="<%=nodeInfo.minPow%>"/>
+									<input type="number" class="form-control" name="minPow" min="0" max="100" step="0.1" value="<%=nodeInfo.minPow%>"/>
 								</div>
 							</div>
 							<div class="form-row">
 								<div class="form-group col-md-6">
 									<label for="contactSelect">Members</label>
-                                    <select id="contactSelect" multiple="multiple" name="contactSelect" required>
+                                    <select id="contactSelect" multiple="multiple" name="contactSelect">
                                         <%if(contacts) { %>
                                         <% for(let contact of contacts.keys()) {%>
 										<%if(contact != 'Me'){%>
