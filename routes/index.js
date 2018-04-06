@@ -64,15 +64,4 @@ router.post('/createGroup', (req,res) => {
     }
 });
 
-router.post('/post', (req, res) => {
-	let topic = req.body.inputTopic;
-	let message = req.body.inputMessage;
-	let sessionK = req.body.inputSessionK;
- 	web3.shh.addSymKey(sessionK, (err, id) => {
-		whisper.post(topic, id, message);
-		global.messageStorage.push('Message sent to topic ( '+ topic + ' ): '+ message);
-		res.redirect('/');
-	});
-});
-
 module.exports = router;

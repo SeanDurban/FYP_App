@@ -93,18 +93,18 @@ function getFilterMessages(filterID, groupName){
 }
 //Send message with symmetric key with topic and key ID provided
 //Assumes message in ASCII format
-function post(topic, keyID, message) {
-    console.time('message'+topic+x);
+function post(topic, keyID, message, powTarget) {
+    console.time('message'+topic);
     web3.shh.post(
         {
             symKeyID: keyID, // encrypts using the sym key ID
             ttl: 20,
             topic: topic,
             payload: web3.utils.asciiToHex(message),
-            powTime: 3,
-            powTarget: 0.5
+            powTime: 12,
+            powTarget: parseFloat(powTarget)
         }, (err, res) => {
-            console.timeEnd('message'+topic+x);
+            console.timeEnd('message'+topic);
             if (err) {
                 console.log('err post: ', err);
             } else{
@@ -115,7 +115,7 @@ function post(topic, keyID, message) {
 }
 //Function for sending files in hex format
 //Files limited to 10mb by underlying DEVp2p transport
-function postFile(topic, keyID, file) {
+function postFile(topic, keyID, file, powTarget) {
 	let fileData= file.data.toString('hex');
     let message = 'FILE||'+file.name+'||'+fileData;
     message = web3.utils.toHex(message);
@@ -126,8 +126,8 @@ function postFile(topic, keyID, file) {
             ttl: 50,
             topic: topic,
             payload: message,
-            powTime: 50,
-            powTarget: 0.2
+            powTime: 70,
+            powTarget: parseFloat(powTarget)
         }, (err2, res) => {
             console.timeEnd('file'+topic);
             if (err2) {
@@ -146,8 +146,8 @@ function postPublicKey(topic, pK, message) {
             ttl: 20,
             topic: topic,
             payload: web3.utils.asciiToHex(message),
-            powTime: 3,
-            powTarget: 0.5
+            powTime: 30,
+            powTarget: 80 //High PoW for lower prob of being rejected
         }, (err, res) => {
             if (err) {
                 console.log('err postPK: ', err);

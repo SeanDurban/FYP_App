@@ -30,7 +30,7 @@ router.post('/:name', (req, res) => {
     web3.shh.addSymKey(sessionK, (err, id) => {
     	for(let topic of groupChannel.topics) {
     		let message = groupChannel.seqNo + '||' + inputMessage;
-            whisper.post(topic, id, message);
+            whisper.post(topic, id, message, groupChannel.minPow);
         }
         groupChannel.seqNo++;
         global.groupChannels.set(groupName,groupChannel);
@@ -45,7 +45,7 @@ router.post('/:name/file', (req, res) => {
 	let sessionK = groupChannel.sessionK;
 	web3.shh.addSymKey(sessionK, (err, id) => {
 		for(let topic of groupChannel.topics) {
-			whisper.postFile(topic, id, file);
+			whisper.postFile(topic, id, file, groupChannel.minPow);
 		}
 		groupChannel.seqNo++;
 		global.groupChannels.set(groupName,groupChannel);
@@ -102,7 +102,7 @@ router.post('/:name/removeMember', (req, res) => {
     //TODO: extend this to multiple group members
     let removedNo = groupChannel.memberInfo[memberSelect[0]];
     let removedTopic = groupChannel.topics[removedNo];
-    session.sendEnd([removedTopic], groupChannel.sessionK);
+    session.sendEnd([removedTopic], groupChannel.sessionK, groupChannel.minPow);
     //Remove group member from topics and memberInfo
     groupChannel.topics.splice(removedNo,1);
     delete groupChannel.memberInfo[memberSelect[0]];

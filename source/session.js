@@ -54,21 +54,21 @@ function sendInit(topics, groupContacts, sessionK, name, nodeNo, minPow){
 }
 //Send REKEY message to all memebers
 //Message includes new session data (topics and sessionK)
-function sendRekey(prevTopics, prevK, sessionK, topics){
+function sendRekey(prevTopics, prevK, sessionK, topics, minPow){
     web3.shh.addSymKey(prevK, (err, id) => {
         for (let i=1; i<prevTopics.length;i++) { //Skip topic[0] since group controller
             var rekeyMessage = `REKEY||${i}||${topics}||${sessionK}`;
-            whisper.post(prevTopics[i], id, rekeyMessage);
+            whisper.post(prevTopics[i], id, rekeyMessage, minPow);
         }
     });
 }
 //Send END message to members at given topics
 //This can be called due to group controller leaving or due to member(s) being removed
-function sendEnd(topics, sessionK){
+function sendEnd(topics, sessionK, minPow){
     web3.shh.addSymKey(sessionK, (err,id) => {
         for (let topic of topics) {
             let message = 'END';
-            whisper.post(topic, id, message);
+            whisper.post(topic, id, message, minPow);
         }
     })
 }
@@ -84,7 +84,7 @@ function triggerRekey(topic) {
     let groupSize = groupChannel.topics.length;
     let nodeNo = 0;
     generateSessionData(groupSize, (newTopics, newSessionK) => {
-        sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics);
+        sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics, groupChannel.minPow);
         let nodeTopic = newTopics[nodeNo];
         let oldFilterID = groupChannel.filterID;
         whisper.createFilter(newTopics[0], newSessionK, groupChannel.minPow, (filterID) => {
