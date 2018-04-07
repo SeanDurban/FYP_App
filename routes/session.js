@@ -137,12 +137,27 @@ router.post('/:name/removeMember', (req, res) => {
 });
 
 router.get('/:name/exit', (req, res) => {
-    let groupName= req.params.name;
-    console.log('Exit group ',topic);
-    //This is on member side
-    //TODO: Send EXIT to group controller
-    //TODO: Unsubscribe to topic, remove as activeTopic
-    res.redirect('/session/'+topic);
+	let groupName= req.params.name;
+	let groupChannel = global.groupChannels.get(groupName);
+	let nodeTopic = groupChannel.topics[groupChannel.nodeNo];
+	session.sendExit(groupChannel.topics[0], nodeTopic, groupChannel.minPow);
+	whisper.handleEnd(nodeTopic);
+	req.flash('Successfully Exited Session');
+	res.redirect('/session/'+groupName);
+});
+
+router.get('/:name/end', (req, res) => {
+	let groupName= req.params.name;
+	let groupChannel = global.groupChannels.get(groupName);
+	let nodeTopic = groupChannel.topics[0];
+	//Remove group controller topic
+	let topics = groupChannel.topics.filter((topic)=> { return topic!=nodeTopic });
+	//Send END messages to all topics (excluding nodeTopic)
+	session.sendEnd(topics, groupChannel.sessionK, groupChannel.minPow);
+	//Handle End on Group Controller App
+	whisper.handleEnd(nodeTopic);
+	req.flash('Successfully Ended Session');
+	res.redirect('/session/'+groupName);
 });
 
 module.exports = router;

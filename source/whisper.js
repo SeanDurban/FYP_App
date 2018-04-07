@@ -79,6 +79,9 @@ function getFilterMessages(filterID, groupName){
                     else if(payload[0] == 'FILE'){
                         handleFile(topic, payload);
                     }
+                    else if(payload[0] == 'EXIT'){
+                        handleExit(payload);
+                    }
                     else {
                         handleMessage(topic, payload);
                     }
@@ -252,7 +255,10 @@ function handleFile(topic, payload){
 		}
 	});
 }
-
+//
+function handleExit(payload){
+    let nodeNo = parseFloat(payload[1]);
+}
 //Wait set amount seconds then clear session data
 //To ensure all nodes are given reasonable time to REKEY if necessary
 function prevSessionTimeout(topic, messageFilterID, messageTimer){
@@ -269,4 +275,4 @@ function clearSessionData(topic, filterID)  {
     global.activeTopics.delete(topic);
 }
 
-module.exports = {subscribeApp,post, postFile,postPublicKey, createFilter, getFilterMessages};
+module.exports = {subscribeApp,post, postFile,postPublicKey, createFilter, getFilterMessages, handleEnd};

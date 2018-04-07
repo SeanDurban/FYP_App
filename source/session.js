@@ -70,38 +70,47 @@ function sendEnd(topics, sessionK, minPow){
             let message = 'END';
             whisper.post(topic, id, message, minPow);
         }
-    })
+    });
 }
-
+//Send EXIT message to group controller
+//This is when a group member wishes to exit group
+function sendExit(groupControllerTopic, nodeNo, minPow) {
+	web3.shh.addSymKey(sessionK, (err,id) => {
+	    let message = `EXIT||${nodeNo}`;
+	    whisper.post(groupControllerTopic, id, message, minPow);
+	});
+}
 //Handle group controller session timeout rekey
 //Sends rekey details to all group members
 //Subscribes to new topic, updates group channels map
 //Resets the session timeout
 function triggerRekey(topic) {
-    console.log('Session timedout ', topic);
     let groupName = global.activeTopics.get(topic);
     let groupChannel = global.groupChannels.get(groupName);
-    let groupSize = groupChannel.topics.length;
-    let nodeNo = 0;
-    generateSessionData(groupSize, (newTopics, newSessionK) => {
-        sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics, groupChannel.minPow);
-        let nodeTopic = newTopics[nodeNo];
-        let oldFilterID = groupChannel.filterID;
-        whisper.createFilter(newTopics[0], newSessionK, groupChannel.minPow, (filterID) => {
-            let newSessionData = groupChannel;
-            newSessionData.filterID = filterID;
-            newSessionData.topics = newTopics;
-            newSessionData.sessionK = newSessionK;
-            newSessionData.timeout = setTimeout(triggerRekey, global.SESSION_TIMEOUT, nodeTopic);
-            let messageTimer = setTimeout(whisper.getFilterMessages, global.messageTimer, filterID, groupName);
-            global.messageTimers.set(filterID, messageTimer);
-            global.activeTopics.set(nodeTopic, groupName);
-            global.groupChannels.set(groupName, newSessionData);
-            console.log('Rekey - updated groups');
-            //Remove the previous session details
-            prevSessionTimeout(topic, oldFilterID);
-        });
-    });
+    if(groupChannel && !groupChannel.isExpired) {
+		console.log('Session timedout ', topic);
+		let groupSize = groupChannel.topics.length;
+		let nodeNo = 0;
+		generateSessionData(groupSize, (newTopics, newSessionK) => {
+			sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics, groupChannel.minPow);
+			let nodeTopic = newTopics[nodeNo];
+			let oldFilterID = groupChannel.filterID;
+			whisper.createFilter(newTopics[0], newSessionK, groupChannel.minPow, (filterID) => {
+				let newSessionData = groupChannel;
+				newSessionData.filterID = filterID;
+				newSessionData.topics = newTopics;
+				newSessionData.sessionK = newSessionK;
+				newSessionData.timeout = setTimeout(triggerRekey, global.SESSION_TIMEOUT, nodeTopic);
+				let messageTimer = setTimeout(whisper.getFilterMessages, global.messageTimer, filterID, groupName);
+				global.messageTimers.set(filterID, messageTimer);
+				global.activeTopics.set(nodeTopic, groupName);
+				global.groupChannels.set(groupName, newSessionData);
+				console.log('Rekey - updated groups');
+				//Remove the previous session details
+				prevSessionTimeout(topic, oldFilterID);
+			});
+		});
+	}
 }
 //Regularly polls a message filter for new messages
 function getNewMessages(groupName) {
@@ -124,4 +133,5 @@ function clearSessionData(topic, filterID)  {
     global.activeTopics.delete(topic);
 }
 
-module.exports = {generateSessionData, getNewKeys, sendInit, sendRekey, sendEnd,triggerRekey, prevSessionTimeout, getNewMessages, appSetup};
+module.exports = {generateSessionData, getNewKeys, sendInit, sendRekey, sendEnd, sendExit, triggerRekey,
+    prevSessionTimeout, getNewMessages, appSetup};
