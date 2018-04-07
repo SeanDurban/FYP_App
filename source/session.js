@@ -2,19 +2,8 @@ const crypto = require('crypto');
 var web3 = global.web3;
 
 let whisper = require('./whisper');
+const utils= require('./utils');
 
-//Returns noMembers Topics and a SessionKey
-function generateSessionData(noMembers, callback) {
-    web3.shh.newSymKey((err,id) => {
-        web3.shh.getSymKey(id,(err2, key) => {
-            let topics = [];
-            for(let i=0; i<noMembers; i++){
-                topics[i] = '0x' + crypto.randomBytes(4).toString('hex');
-            }
-            callback(topics, key);
-        })
-    });
-}
 function appSetup(){
     web3.shh.getInfo((err,info) => {
         if(err)
@@ -74,7 +63,7 @@ function sendEnd(topics, sessionK, minPow){
 }
 //Send EXIT message to group controller
 //This is when a group member wishes to exit group
-function sendExit(groupControllerTopic, nodeNo, minPow) {
+function sendExit(groupControllerTopic, nodeNo, sessionK, minPow) {
 	web3.shh.addSymKey(sessionK, (err,id) => {
 	    let message = `EXIT||${nodeNo}`;
 	    whisper.post(groupControllerTopic, id, message, minPow);
@@ -91,7 +80,7 @@ function triggerRekey(topic) {
 		console.log('Session timedout ', topic);
 		let groupSize = groupChannel.topics.length;
 		let nodeNo = 0;
-		generateSessionData(groupSize, (newTopics, newSessionK) => {
+		utils.generateSessionData(groupSize, (newTopics, newSessionK) => {
 			sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics, groupChannel.minPow);
 			let nodeTopic = newTopics[nodeNo];
 			let oldFilterID = groupChannel.filterID;
@@ -112,6 +101,43 @@ function triggerRekey(topic) {
 		});
 	}
 }
+//Handle removal of member from group
+function handleRemoveMember(groupName, memberSelect){
+	let groupChannel = global.groupChannels.get(groupName);
+	let oldFilterID = groupChannel.filterID;
+	let oldTopic = groupChannel.topics[groupChannel.nodeNo];
+	let newGroupSize = groupChannel.topics.length - 1;
+	let removedNo = groupChannel.memberInfo[memberSelect[0]];
+	//Remove group member from topics and memberInfo
+	groupChannel.topics.splice(removedNo,1);
+	delete groupChannel.memberInfo[memberSelect[0]];
+	//Clear current timeout
+	clearTimeout(groupChannel.timeout);
+	utils.generateSessionData(newGroupSize, (newTopics, newSessionK) => {
+		sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics, groupChannel.minPow);
+		whisper.createFilter(newTopics[0], newSessionK, groupChannel.minPow, (filterID) => {
+			let newSessionData = groupChannel;
+			//Update memberInfo (nodeNo may have changed)
+			for (let name of Object.keys(groupChannel.memberInfo)) {
+				if (groupChannel.memberInfo[name] > removedNo) {
+					groupChannel.memberInfo[name]--;
+				}
+			}
+			newSessionData.filterID = filterID;
+			newSessionData.topics = newTopics;
+			newSessionData.sessionK = newSessionK;
+			newSessionData.timeout = setTimeout(triggerRekey, global.SESSION_TIMEOUT, newTopics[0]);
+			let messageTimer = setTimeout(whisper.getFilterMessages, global.messageTimer, filterID, groupName);
+			global.messageTimers.set(filterID, messageTimer);
+			global.activeTopics.set(newTopics[0], groupName);
+			global.groupChannels.set(groupName, newSessionData);
+
+			//Clear prev session
+			prevSessionTimeout(oldTopic, oldFilterID);
+		});
+	} );
+}
+
 //Regularly polls a message filter for new messages
 function getNewMessages(groupName) {
     let filterID = global.groupChannels.get(groupName).filterID;
@@ -133,5 +159,5 @@ function clearSessionData(topic, filterID)  {
     global.activeTopics.delete(topic);
 }
 
-module.exports = {generateSessionData, getNewKeys, sendInit, sendRekey, sendEnd, sendExit, triggerRekey,
-    prevSessionTimeout, getNewMessages, appSetup};
+module.exports = {getNewKeys, sendInit, sendRekey, sendEnd, sendExit, triggerRekey,
+    prevSessionTimeout, handleRemoveMember, getNewMessages, appSetup};

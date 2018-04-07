@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const buffer = require('buffer');
 const web3 = global.web3;
-
+const utils= require('./utils');
 //This subscribes to a topic with a symmetric key provided
 //This method is used in the group sessions/channels
 function subscribeWithKey(topic, key){
@@ -80,7 +80,7 @@ function getFilterMessages(filterID, groupName){
                         handleFile(topic, payload);
                     }
                     else if(payload[0] == 'EXIT'){
-                        handleExit(payload);
+                        handleExit(topic, payload);
                     }
                     else {
                         handleMessage(topic, payload);
@@ -256,8 +256,97 @@ function handleFile(topic, payload){
 	});
 }
 //
-function handleExit(payload){
+function handleExit(topic, payload){
     let nodeNo = parseFloat(payload[1]);
+	let groupName = global.activeTopics.get(topic);
+	let groupChannel = global.groupChannels.get(groupName);
+	let memberInfo = Object.entries(groupChannel.memberInfo).filter((entry) =>{
+	    return entry[1] == nodeNo;
+    });
+	let memberSelect = [memberInfo[0][0]];
+	handleRemoveMember(groupName, memberSelect);
+	groupChannel.messages.push('A member has left the group :'+ memberSelect);
+	global.groupChannels.set(groupName, groupChannel);
+}
+//TODO: This code is duplicated - sort out cyclic dependencies
+//Handle removal of member from group
+function handleRemoveMember(groupName, memberSelect){
+	let groupChannel = global.groupChannels.get(groupName);
+	let oldFilterID = groupChannel.filterID;
+	let oldTopic = groupChannel.topics[groupChannel.nodeNo];
+	let newGroupSize = groupChannel.topics.length - 1;
+	let removedNo = groupChannel.memberInfo[memberSelect[0]];
+	//Remove group member from topics and memberInfo
+	groupChannel.topics.splice(removedNo,1);
+	delete groupChannel.memberInfo[memberSelect[0]];
+	//Clear current timeout
+	clearTimeout(groupChannel.timeout);
+	utils.generateSessionData(newGroupSize, (newTopics, newSessionK) => {
+		sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics, groupChannel.minPow);
+		createFilter(newTopics[0], newSessionK, groupChannel.minPow, (filterID) => {
+			let newSessionData = groupChannel;
+			//Update memberInfo (nodeNo may have changed)
+			for (let name of Object.keys(groupChannel.memberInfo)) {
+				if (groupChannel.memberInfo[name] > removedNo) {
+					groupChannel.memberInfo[name]--;
+				}
+			}
+			newSessionData.filterID = filterID;
+			newSessionData.topics = newTopics;
+			newSessionData.sessionK = newSessionK;
+			newSessionData.timeout = setTimeout(triggerRekey, global.SESSION_TIMEOUT, newTopics[0]);
+			let messageTimer = setTimeout(getFilterMessages, global.messageTimer, filterID, groupName);
+			global.messageTimers.set(filterID, messageTimer);
+			global.activeTopics.set(newTopics[0], groupName);
+			global.groupChannels.set(groupName, newSessionData);
+
+			//Clear prev session
+			prevSessionTimeout(oldTopic, oldFilterID);
+		});
+	} );
+}
+//Send REKEY message to all memebers
+//Message includes new session data (topics and sessionK)
+function sendRekey(prevTopics, prevK, sessionK, topics, minPow){
+	web3.shh.addSymKey(prevK, (err, id) => {
+		for (let i=1; i<prevTopics.length;i++) { //Skip topic[0] since group controller
+			var rekeyMessage = `REKEY||${i}||${topics}||${sessionK}`;
+			post(prevTopics[i], id, rekeyMessage, minPow);
+		}
+	});
+}
+
+//Handle group controller session timeout rekey
+//Sends rekey details to all group members
+//Subscribes to new topic, updates group channels map
+//Resets the session timeout
+function triggerRekey(topic) {
+	let groupName = global.activeTopics.get(topic);
+	let groupChannel = global.groupChannels.get(groupName);
+	if(groupChannel && !groupChannel.isExpired) {
+		console.log('Session timedout ', topic);
+		let groupSize = groupChannel.topics.length;
+		let nodeNo = 0;
+		utils.generateSessionData(groupSize, (newTopics, newSessionK) => {
+			sendRekey(groupChannel.topics, groupChannel.sessionK, newSessionK, newTopics, groupChannel.minPow);
+			let nodeTopic = newTopics[nodeNo];
+			let oldFilterID = groupChannel.filterID;
+			createFilter(newTopics[0], newSessionK, groupChannel.minPow, (filterID) => {
+				let newSessionData = groupChannel;
+				newSessionData.filterID = filterID;
+				newSessionData.topics = newTopics;
+				newSessionData.sessionK = newSessionK;
+				newSessionData.timeout = setTimeout(triggerRekey, global.SESSION_TIMEOUT, nodeTopic);
+				let messageTimer = setTimeout(getFilterMessages, global.messageTimer, filterID, groupName);
+				global.messageTimers.set(filterID, messageTimer);
+				global.activeTopics.set(nodeTopic, groupName);
+				global.groupChannels.set(groupName, newSessionData);
+				console.log('Rekey - updated groups');
+				//Remove the previous session details
+				prevSessionTimeout(topic, oldFilterID);
+			});
+		});
+	}
 }
 //Wait set amount seconds then clear session data
 //To ensure all nodes are given reasonable time to REKEY if necessary

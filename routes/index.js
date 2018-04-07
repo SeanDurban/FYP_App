@@ -5,6 +5,7 @@ var web3 = global.web3;
 
 const whisper = require('../source/whisper');
 const session = require('../source/session');
+const utils= require('../source/utils');
 
 const INIT_TIMEOUT = 25000;  //25 seconds
 
@@ -39,7 +40,7 @@ router.post('/createGroup', (req,res) => {
 	contactsGiven = (contactsGiven.constructor == Array)? contactsGiven:[contactsGiven];
 	let name = req.body.groupName;
 	let minPow = req.body.minPow;
-	session.generateSessionData(contactsGiven.length + 1, (topics, sessionK) => {
+	utils.generateSessionData(contactsGiven.length + 1, (topics, sessionK) => {
 		//Group initiator is controller and always nodeNo 0
 		session.sendInit(topics, contactsGiven, sessionK, name, 1, minPow);
 		let nodeTopic = topics[0];
