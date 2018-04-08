@@ -2,9 +2,11 @@
 <html>
   <head>
     <title>Whisper App</title>
-    <link rel='stylesheet' src='/public/css/style.css'/>
-  	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.0.0/css/bootstrap-slider.css" />
-  	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" />
+    <link rel='stylesheet' href='/public/css/style.css'/>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.2.0/css/ion.rangeSlider.min.css" />
+  	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.2.0/css/ion.rangeSlider.skinFlat.min.css" />
+
   </head>
   <body class="container">
         <% if(err && err.length > 0) { %>
@@ -53,22 +55,15 @@
 		</table>
 		<hr></hr>
 		<h5>Node Settings</h5>
-		<input id="ex1" data-slider-id='ex1Slider' type="text" data-slider-min="0" data-slider-max="100" data-slider-step="0.2" data-slider-value="<%=nodeInfo.minPow%>"/>
-		<br></br>
 		<h6>PoW level</h6>
 		<div class="row">
-			<form action="/pow" method="post" id='powForm'>
-				<select name="pow">
-					<option value="0">None (0)</option>
-					<option value="0.2" selected>Default (0.2)</option>
-					<option value="30">Intermediate (30)</option>
-					<option value="60">High (60)</option>
-					<option value="80">Very High (80)</option>
-					<option value="100">Max (1)</option>
-				</select>
-				<button type="submit" class="btn btn-dark btn-sm">Set</button>
-			</form>
-		</div>
+			<div class="col col-md-6">
+		<form action="/pow" method="post" id='powForm'>
+			<input type="text" id="powSlider" name="minPow" value=""/>
+			<button type="submit" class="btn btn-dark btn-sm" style="margin-top: 10px;">Set</button>
+		</form>
+			</div></div>
+
 		<hr></hr>
 		<a href="#spamModal" class="btn btn-warning btn-sm" data-toggle="modal">Spam Demo</a>
 		<br> </br>
@@ -188,13 +183,18 @@
 		</div>
   </body>
 </html>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/10.0.0/bootstrap-slider.js" type="text/javascript"/> </script>
 <script src="https://code.jquery.com/jquery-3.2.1.min.js"/> </script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"/></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"/></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.2.0/js/ion.rangeSlider.min.js" type="text/javascript"/> </script>
 <script>
-	var slider = new Slider('#ex1', {
-		formatter: function(value) {
-			return 'Current value: ' + value;
-		}
+$(function() {
+	$("#powSlider").ionRangeSlider({
+		grid:true,
+		min: 0,
+		max: 100,
+		from: <%=nodeInfo.minPow%>,
+		step: 0.2,
+		force_edges:true
 	});
+});
 </script>

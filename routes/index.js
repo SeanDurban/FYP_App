@@ -15,13 +15,13 @@ router.get('/', function(req, res, next) {
 });
 
 router.post('/pow', (req,res) => {
-	web3.shh.setMinPoW(parseFloat(req.body.pow), (err) =>{
+	web3.shh.setMinPoW(parseFloat(req.body.minPow), (err) =>{
 		if(err){
 			req.flash('err',err);
 			return res.redirect('/');
 		}
-		global.nodeInfo.minPow = req.body.pow;
-		req.flash('succ', 'Succesfully Changed PoW level to: '+req.body.pow);
+		global.nodeInfo.minPow = req.body.minPow;
+		req.flash('succ', 'Succesfully Changed PoW level to: '+req.body.minPow);
 		return res.redirect('/');
 	});
 });
