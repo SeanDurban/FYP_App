@@ -75,6 +75,7 @@ function getFilterMessages(filterID, groupName){
 //Send message with symmetric key with topic and key ID provided
 //Assumes message in ASCII format
 function post(topic, keyID, message, powTarget) {
+	powTarget = Math.max(parseFloat(powTarget), parseFloat(global.nodeInfo.minPow));
     //For time testing of PoW
 	//console.time('message'+topic);
     web3.shh.post(
@@ -101,6 +102,7 @@ function postFile(topic, keyID, file, powTarget) {
 	let fileData= file.data.toString('hex');
     let message = 'FILE||'+file.name+'||'+fileData;
     message = web3.utils.toHex(message);
+	powTarget = Math.max(parseFloat(powTarget), parseFloat(global.nodeInfo.minPow));
 	//console.time('file'+topic);
 	web3.shh.post(
         {
@@ -123,6 +125,7 @@ function postFile(topic, keyID, file, powTarget) {
 }
 //Send message with asymmetric key and topic
 function postPublicKey(topic, pK, message, powTarget) {
+	powTarget = Math.max(parseFloat(powTarget), parseFloat(global.nodeInfo.minPow));
     web3.shh.post(
         {
             pubKey: pK, // encrypts using the public key
