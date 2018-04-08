@@ -71,15 +71,16 @@
 		</div>
 		<hr></hr>
 		<a href="#spamModal" class="btn btn-warning btn-sm" data-toggle="modal">Spam Demo</a>
-				<br>
+		<br> </br>
 				<h5>All Messages Received</h5>
 					<%if(messageStorage && messageStorage.length>0) { %>
+					<table class="table table-sm table-striped table-bordered">
+						<tbody>
 						<% for(let message of messageStorage) {%>
-							<div class="row">
-							<p><%=message%></p>
-						</div>
-					<%	}%>
-					<% } %>
+						<tr><td><%=message%></td></tr>
+					<%	} } %>
+						</tbody>
+					</table>
 
 					<div id="contactModal" class="modal fade">
 						<div class="modal-dialog modal-confirm">
