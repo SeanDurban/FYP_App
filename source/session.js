@@ -36,7 +36,7 @@ function sendInit(topics, groupContacts, sessionK, name, nodeNo, minPow){
         var contactInfo = global.contacts.get(contact);
         if(contactInfo){
             var initMessage = `INIT||${name}||${nodeNo}||${topics}||${sessionK}||${minPow}`;
-            whisper.postPublicKey(contactInfo.topic, contactInfo.pubKey, initMessage);
+            whisper.postPublicKey(contactInfo.topic, contactInfo.pubKey, initMessage, contactInfo.minPow);
             nodeNo++;
         }
     }

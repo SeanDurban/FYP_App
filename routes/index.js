@@ -28,8 +28,7 @@ router.post('/pow', (req,res) => {
 
 router.post('/contact', (req, res) => {
     let name = req.body.name;
-    let contactInfo = {topic: global.topicInit, pubKey: req.body.publicKey};
-    //TODO: Add min PoW to contact info
+    let contactInfo = {topic: global.topicInit, pubKey: req.body.publicKey, minPow:req.body.minPow};
     global.contacts.set(name, contactInfo);
 	console.log('Added contact ',name);
     res.redirect('/');
@@ -73,7 +72,7 @@ router.post('/spam', (req, res) => {
 });
 
 function sendSpam(topic, pubKey, i){
-	whisper.postPublicKey(topic,pubKey,'Spam '+i);
+	whisper.postPublicKey(topic,pubKey,'Spam '+i, 0.2);
 	if(i<20) { //Only send 20 messages every 3.5 seconds
 		setTimeout(sendSpam, 3500, topic, pubKey, i + 1);
 	} else {

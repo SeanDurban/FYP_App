@@ -122,7 +122,7 @@ function postFile(topic, keyID, file, powTarget) {
     );
 }
 //Send message with asymmetric key and topic
-function postPublicKey(topic, pK, message) {
+function postPublicKey(topic, pK, message, powTarget) {
     web3.shh.post(
         {
             pubKey: pK, // encrypts using the public key
@@ -130,7 +130,7 @@ function postPublicKey(topic, pK, message) {
             topic: topic,
             payload: web3.utils.asciiToHex(message),
             powTime: 1,
-            powTarget: 0.2 //High PoW for lower prob of being rejected
+            powTarget: parseFloat(powTarget)
         }, (err, res) => {
             if (err) {
                 console.log('err postPK: ', err);
