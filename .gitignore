@@ -65,3 +65,6 @@ nodeInfo/
 
 # Data folder
 data/*
+
+# Batch scripts
+*.bat
