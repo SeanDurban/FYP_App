@@ -4,29 +4,7 @@ const path = require('path');
 const buffer = require('buffer');
 const web3 = global.web3;
 const utils= require('./utils');
-//This subscribes to a topic with a symmetric key provided
-//This method is used in the group sessions/channels
-function subscribeWithKey(topic, key){
-    web3.shh.addSymKey(key,(err,keyID) => {
-        web3.shh.subscribe('messages', {
-            symKeyID: keyID,
-            topics: [topic]
-        })
-            .on('data', res => {
-                console.log('New message received');
-                let payload = web3.utils.hexToAscii(res.payload).split('||');
-                if (payload[0] == 'REKEY') {
-                    handleRekey(topic, payload);
-                }
-                else if(payload[0] == 'END'){
-                    handleEnd(topic);
-                } else {
-                    handleMessage(res.topic, payload);
-                }
-            });
-        console.log('Subscribed to topic: ', topic);
-    });
-}
+
 //Subscribes to a set topic (Tinit) with a corresponding key pair
 //This public key should be advertised in public domain. This is initial contact point for users
 //Used to initialise a group session/channel
@@ -97,7 +75,8 @@ function getFilterMessages(filterID, groupName){
 //Send message with symmetric key with topic and key ID provided
 //Assumes message in ASCII format
 function post(topic, keyID, message, powTarget) {
-    console.time('message'+topic);
+    //For time testing of PoW
+	//console.time('message'+topic);
     web3.shh.post(
         {
             symKeyID: keyID, // encrypts using the sym key ID
@@ -107,7 +86,7 @@ function post(topic, keyID, message, powTarget) {
             powTime: 12,
             powTarget: parseFloat(powTarget)
         }, (err, res) => {
-            console.timeEnd('message'+topic);
+           // console.timeEnd('message'+topic);
             if (err) {
                 console.log('err post: ', err);
             } else{
@@ -122,7 +101,7 @@ function postFile(topic, keyID, file, powTarget) {
 	let fileData= file.data.toString('hex');
     let message = 'FILE||'+file.name+'||'+fileData;
     message = web3.utils.toHex(message);
-	console.time('file'+topic);
+	//console.time('file'+topic);
 	web3.shh.post(
         {
             symKeyID: keyID, // encrypts using the sym key ID
@@ -132,7 +111,8 @@ function postFile(topic, keyID, file, powTarget) {
             powTime: 70,
             powTarget: parseFloat(powTarget)
         }, (err2, res) => {
-            console.timeEnd('file'+topic);
+        	//For time testing
+           // console.timeEnd('file'+topic);
             if (err2) {
                 console.log('err postFile: ', err2);
             } else{
@@ -149,8 +129,8 @@ function postPublicKey(topic, pK, message) {
             ttl: 20,
             topic: topic,
             payload: web3.utils.asciiToHex(message),
-            powTime: 30,
-            powTarget: 80 //High PoW for lower prob of being rejected
+            powTime: 1,
+            powTarget: 0.2 //High PoW for lower prob of being rejected
         }, (err, res) => {
             if (err) {
                 console.log('err postPK: ', err);

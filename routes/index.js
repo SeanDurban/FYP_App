@@ -20,6 +20,7 @@ router.post('/pow', (req,res) => {
 			req.flash('err',err);
 			return res.redirect('/');
 		}
+		global.nodeInfo.minPow = req.body.pow;
 		req.flash('succ', 'Succesfully Changed PoW level to: '+req.body.pow);
 		return res.redirect('/');
 	});
@@ -63,5 +64,21 @@ router.post('/createGroup', (req,res) => {
 		});
 	});
 });
+
+router.post('/spam', (req, res) => {
+	let pubKey = req.body.publicKey;
+	let topic = req.body.topic;
+	sendSpam(topic,pubKey,0);
+	res.redirect('/');
+});
+
+function sendSpam(topic, pubKey, i){
+	whisper.postPublicKey(topic,pubKey,'Spam '+i);
+	if(i<20) { //Only send 20 messages every 3.5 seconds
+		setTimeout(sendSpam, 3500, topic, pubKey, i + 1);
+	} else {
+		console.log('End Spam');
+	}
+}
 
 module.exports = router;
