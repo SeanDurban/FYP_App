@@ -73,8 +73,8 @@ router.post('/spam', (req, res) => {
 
 function sendSpam(topic, pubKey, i){
 	whisper.postPublicKey(topic,pubKey,'Spam '+i, 0.2);
-	if(i<20) { //Only send 20 messages every 3.5 seconds
-		setTimeout(sendSpam, 3500, topic, pubKey, i + 1);
+	if(i<4) { //Only send 20 messages every 3.5 seconds
+		setTimeout(sendSpam, 3000, topic, pubKey, i + 1);
 	} else {
 		console.log('End Spam');
 	}

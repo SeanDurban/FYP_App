@@ -99,11 +99,11 @@ router.post('/:name/removeMember', (req, res) => {
     let memberSelect = req.body.memberSelect;
     memberSelect= (memberSelect.constructor == Array)? memberSelect:[memberSelect];
     console.log('Remove Member ',memberSelect);
-   	session.handleRemoveMember(groupName, memberSelect);
 	//Send END message to removed member
-   	let removedNo = groupChannel.memberInfo[memberSelect[0]];
+	let removedNo = groupChannel.memberInfo[memberSelect[0]];
 	let removedTopic = groupChannel.topics[removedNo];
 	session.sendEnd([removedTopic], groupChannel.sessionK, groupChannel.minPow);
+   	session.handleRemoveMember(groupName, memberSelect);
 	res.redirect('/session/'+groupName);
 });
 
