@@ -29,7 +29,7 @@ global.messageTimers = new Map();
 //App details
 global.nodeWS = 'ws://localhost:'+wsAddresses[args[0]-1];
 global.topicInit = '0xffddaa11';
-global.messageTimer = 5000; //5 secs
+global.messageTimer = 2000; //5 secs
 global.SESSION_TIMEOUT = 50000; //50 seconds
 global.nodeInfo = {};
 
