@@ -14,11 +14,13 @@ function subscribeApp(keyID, topic){
         topics: [topic] //Test topic is Tinit
     })
         .on('data', res => {
-            console.log('Base message received');
-            var m =  web3.utils.hexToAscii(res.payload).split('||');
-            global.messageStorage.push('Message from base app '+m);
-            if(m[0] == 'INIT') //If message is INIT = initialise group
-                setupSession(m);
+			console.log('Base message received');
+			var m = web3.utils.hexToAscii(res.payload).split('||');
+			if (m[0] == 'INIT'){ //If message is INIT = initialise group
+				setupSession(m);
+			} else {
+				global.messageStorage.push(m);
+			}
         });
     console.log('App subscribed to: ', topic);
 }
@@ -147,6 +149,7 @@ function postPublicKey(topic, pK, message, powTarget) {
 //Creates and subscribes to groupChannel
 function setupSession(message){
     let groupName = message[1];
+	global.messageStorage.push('New Group created: '+groupName);
     let nodeNo = message[2];
     let topics = message[3].split(',');
     let sessionK = message[4];
@@ -166,7 +169,6 @@ function setupSession(message){
 function handleMessage(topic, payload) {
     let seqNo = payload[0];
     let message = payload[1];
-    global.messageStorage.push('Message from topic ( ' + topic + ' ): ' + message);
     //update global groupChannels map
     let groupName = global.activeTopics.get(topic);
     let groupChannel = global.groupChannels.get(groupName);
@@ -195,7 +197,6 @@ function handleRekey(topic, payload) {
         groupChannel.nodeNo = nodeNo;
         global.groupChannels.set(groupName, groupChannel);
         global.activeTopics.set(newNodeTopic, groupName);
-        global.messageStorage.push('Rekey for topic ( ' + topic + ' ): ' + payload);
         console.log('Successful Rekey for previous topic ', topic);
         let messageTimer = setTimeout(getFilterMessages, global.messageTimer, filterID, groupName);
         global.messageTimers.set(filterID, messageTimer);
@@ -208,7 +209,6 @@ function handleRekey(topic, payload) {
 function handleEnd(topic){
     let groupName = global.activeTopics.get(topic);
     let groupChannel = global.groupChannels.get(groupName);
-    global.messageStorage.push('End for topic ('+ topic + ')');
     groupChannel.messages.push('End of session');
     groupChannel.isExpired = true;
     global.groupChannels.set(groupName, groupChannel);
@@ -227,7 +227,6 @@ function handleFile(topic, payload){
 		   return;
 	   }
 		let fileMsg = 'File from topic ( ' + topic + ' ): ' + fileName;
-		global.messageStorage.push(fileMsg);
 		//update global groupChannels map
 		let groupName = global.activeTopics.get(topic);
 		let groupChannel = global.groupChannels.get(groupName);
