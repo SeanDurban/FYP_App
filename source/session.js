@@ -9,10 +9,11 @@ function appSetup(){
         if(err)
             throw err;
         getNewKeys((id, pubKey) => {
-			var contactInfo = {topic: global.topicInit, pubKey:pubKey };
+			let nodeTopic = '0x' + crypto.randomBytes(4).toString('hex');
+			var contactInfo = {topic: nodeTopic, pubKey:pubKey };
 			global.contacts.set('Me', contactInfo);
-			global.nodeInfo = {minPow:info.minPow, pubKey:pubKey, topic:global.topicInit, keyID:id};
-			whisper.subscribeApp(id, global.topicInit);
+			global.nodeInfo = {minPow:info.minPow, pubKey:pubKey, topic:nodeTopic, keyID:id};
+			whisper.subscribeApp(id, nodeTopic);
         });
     });
 }

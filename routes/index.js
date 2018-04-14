@@ -28,7 +28,7 @@ router.post('/pow', (req,res) => {
 
 router.post('/contact', (req, res) => {
     let name = req.body.name;
-    let contactInfo = {topic: global.topicInit, pubKey: req.body.publicKey, minPow:req.body.minPow};
+    let contactInfo = {topic: req.body.topic, pubKey: req.body.publicKey, minPow:req.body.minPow};
     global.contacts.set(name, contactInfo);
 	console.log('Added contact ',name);
     res.redirect('/');
