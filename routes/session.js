@@ -20,7 +20,8 @@ router.get('/:name', function(req, res, next) {
     }
     let isExpired = (groupChannel.isExpired && groupChannel.isExpired==true)? true : false;
     let isGroupController = groupChannel.nodeNo == 0 ? true : false;
-    let groupInfo = {size:groupChannel.topics.length, noMessages:groupChannel.messages.length, minPow:groupChannel.minPow};
+    let groupInfo = {size:groupChannel.topics.length, noMessages:groupChannel.messages.length, minPow:groupChannel.minPow,
+		currentTopic:groupChannel.topics[groupChannel.nodeNo]};
   	res.render('session',{name: groupName, messages:groupChannel.messages.slice().reverse(), groupMembers, contacts,
 		groupInfo,isExpired, isGroupController,err: req.flash('err'),succ: req.flash('succ'), demoAlert:global.demoAlert, demoName:global.demoName });
 });

@@ -191,8 +191,9 @@ function handleRekey(topic, payload) {
 	let groupChannel = global.groupChannels.get(groupName);
     let oldFilterID = groupChannel.filterID;
     createFilter(newNodeTopic, newSessionK, groupChannel.minPow, (filterID) => {
+    	groupChannel.messages.push('A Rekey has occured');
         groupChannel.filterID =filterID;
-        groupChannel.topics = newTopics;  //Only update updated details, keep messages/seqNo
+        groupChannel.topics = newTopics;
         groupChannel.sessionK = newSessionK;
         groupChannel.nodeNo = nodeNo;
         global.groupChannels.set(groupName, groupChannel);
