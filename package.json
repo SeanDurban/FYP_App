@@ -7,6 +7,8 @@
     "start1": "node app.js 1",
     "start2": "node app.js 2",
     "start3": "node app.js 3",
+    "start4": "node app.js 4",
+    "start5": "node app.js 5",
     "start1-dev": "node app.js 1 DEV",
     "start2-dev": "node app.js 2 DEV",
     "start3-dev": "node app.js 3 DEV",
