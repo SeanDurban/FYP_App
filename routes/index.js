@@ -11,7 +11,7 @@ const INIT_TIMEOUT = 25000;  //25 seconds
 
 router.get('/', function(req, res, next) {
   res.render('index', {messageStorage:global.messageStorage.slice().reverse(), groupChannels:global.groupChannels,
-	  contacts:global.contacts, nodeInfo:global.nodeInfo, err: req.flash('err'),succ: req.flash('succ')});
+	  contacts:global.contacts, nodeInfo:global.nodeInfo, err: req.flash('err'),succ: req.flash('succ'), demoAlert:global.demoAlert, demoName:global.demoName});
 });
 
 router.post('/pow', (req,res) => {

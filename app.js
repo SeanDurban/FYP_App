@@ -32,6 +32,12 @@ global.messageTimer = 2000; //5 secs
 global.SESSION_TIMEOUT = 50000; //50 seconds
 global.nodeInfo = {};
 
+//For demo
+let alerts = ['success', 'danger', 'primary','primary','primary'];
+let names = ['Charlie', 'Alice', 'Bob', 'Node4', 'Node5'];
+global.demoName = names[args[0]-1];
+global.demoAlert = 'alert alert-'+alerts[args[0]-1];
+
 if(args[0] == '1') {
   global.web3 = new Web3(new Web3.providers.IpcProvider('\\\\.\\pipe\\geth.ipc', net));
 } else {
