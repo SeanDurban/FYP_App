@@ -87,7 +87,8 @@ function triggerRekey(topic) {
 			let oldFilterID = groupChannel.filterID;
 			whisper.createFilter(newTopics[0], newSessionK, groupChannel.minPow, (filterID) => {
 				let newSessionData = groupChannel;
-				newSessionData.messages.push('A Rekey has occured');
+				let messageObj = {message:'A Rekey has occured', timestamp: new Date().toLocaleString()};
+				newSessionData.messages.push(messageObj);
 				newSessionData.filterID = filterID;
 				newSessionData.topics = newTopics;
 				newSessionData.sessionK = newSessionK;

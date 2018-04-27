@@ -1,7 +1,7 @@
 {
   "name": "fyp-app",
   "version": "1.0.0",
-  "description": "Whisper messaging service enabled through Web3 framework",
+  "description": "Messaging Dapp utlising Whisper and Web3",
   "main": "index.js",
   "scripts": {
     "start1": "node app.js 1",

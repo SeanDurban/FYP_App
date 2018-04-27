@@ -5,7 +5,6 @@
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" />
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.2.0/css/ion.rangeSlider.min.css" />
   	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ion-rangeslider/2.2.0/css/ion.rangeSlider.skinFlat.min.css" />
-	  <meta http-equiv="refresh" content="30">
   </head>
   <body class="container">
         <% if(err && err.length > 0) { %>
@@ -77,8 +76,12 @@
 					<table class="table table-sm table-striped table-bordered">
 						<tbody>
 						<% for(let message of messageStorage) {%>
-						<tr><td><%=message%></td></tr>
-					<%	} } %>
+						<tr>
+							<td style="width: 20%"><%=message.timestamp%></td>
+							<td><%=message.message%></td>
+						</tr>
+                        <%	}%>
+                        <% } %>
 						</tbody>
 					</table>
 

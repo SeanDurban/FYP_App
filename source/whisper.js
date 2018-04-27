@@ -15,11 +15,13 @@ function subscribeApp(keyID, topic){
     })
         .on('data', res => {
 			console.log('Base message received');
-			var m = web3.utils.hexToAscii(res.payload).split('||');
-			if (m[0] == 'INIT'){ //If message is INIT = initialise group
-				setupSession(m);
+			var message = web3.utils.hexToAscii(res.payload).split('||');
+			if (message[0] == 'INIT'){ //If message is INIT = initialise group
+				setupSession(message);
 			} else {
-				global.messageStorage.push(m);
+				let timestamp = new Date(envelope.timestamp*1000).toLocaleString(); //Convert unix timestamp to readable string
+				let messageObj = {message:message, timestamp:timestamp};
+				global.messageStorage.push(messageObj);
 			}
         });
     console.log('App subscribed to: ', topic);
@@ -50,24 +52,23 @@ function getFilterMessages(filterID, groupName){
                     console.log('New message received for ', envelope.topic, ' | ', envelope.pow);
                     let payload = web3.utils.hexToAscii(envelope.payload).split('||');
                     let topic = envelope.topic;
+                    let timestamp = new Date(envelope.timestamp*1000).toLocaleString(); //Convert unix timestamp to readable string
                     if (payload[0] == 'REKEY') {
-                        handleRekey(topic, payload);
+                        handleRekey(topic, payload, timestamp);
                     }
                     else if (payload[0] == 'END') {
-                        handleEnd(topic);
+                        handleEnd(topic, timestamp);
                     }
                     else if(payload[0] == 'FILE'){
-                        handleFile(topic, payload);
+                        handleFile(topic, payload, timestamp);
                     }
                     else if(payload[0] == 'EXIT'){
-                        handleExit(topic, payload);
+                        handleExit(topic, payload, timestamp);
                     }
                     else {
-                        handleMessage(topic, payload);
+                        handleMessage(topic, payload, timestamp);
                     }
                 }
-            } else {
-              //  console.log('No new messages for :', groupName);
             }
             let messageTimer = setTimeout(getFilterMessages, global.messageTimer, filterID, groupName);
             global.messageTimers.set(filterID, messageTimer);
@@ -149,7 +150,8 @@ function postPublicKey(topic, pK, message, powTarget) {
 //Creates and subscribes to groupChannel
 function setupSession(message){
     let groupName = message[1];
-	global.messageStorage.push('New Group created: '+groupName);
+	let messageObj = {message:'New Group created: '+groupName, timestamp:new Date().toLocaleString()};
+	global.messageStorage.push(messageObj);
     let nodeNo = message[2];
     let topics = message[3].split(',');
     let sessionK = message[4];
@@ -166,14 +168,15 @@ function setupSession(message){
 }
 //Handle group member message
 //Extracts message and updates group channel map
-function handleMessage(topic, payload) {
+function handleMessage(topic, payload, timestamp) {
     let seqNo = payload[0];
     let message = payload[1];
     //update global groupChannels map
     let groupName = global.activeTopics.get(topic);
     let groupChannel = global.groupChannels.get(groupName);
     if (groupChannel) {
-        groupChannel.messages.push(message);
+    	let messageObj = {message:message, timestamp:timestamp};
+        groupChannel.messages.push(messageObj);
         groupChannel.seqNo++;
         global.groupChannels.set(groupName, groupChannel);
     }
@@ -182,7 +185,7 @@ function handleMessage(topic, payload) {
 //Handle group member rekey
 //Extracts new session details, subscribes to new topic
 //Updates group channel map
-function handleRekey(topic, payload) {
+function handleRekey(topic, payload, timestamp) {
     let nodeNo = payload[1];
     let newTopics = payload[2].split(',');
     let newSessionK = payload[3];
@@ -191,7 +194,8 @@ function handleRekey(topic, payload) {
 	let groupChannel = global.groupChannels.get(groupName);
     let oldFilterID = groupChannel.filterID;
     createFilter(newNodeTopic, newSessionK, groupChannel.minPow, (filterID) => {
-    	groupChannel.messages.push('A Rekey has occured');
+    	let messageObj = {message:'A Rekey has occured', timestamp:timestamp};
+    	groupChannel.messages.push(messageObj);
         groupChannel.filterID =filterID;
         groupChannel.topics = newTopics;
         groupChannel.sessionK = newSessionK;
@@ -207,16 +211,17 @@ function handleRekey(topic, payload) {
 //Handle END message received
 //Sets the group channel as expired as it should no longer receive new messages for that channel
 //Clears the session data
-function handleEnd(topic){
+function handleEnd(topic, timestamp){
     let groupName = global.activeTopics.get(topic);
     let groupChannel = global.groupChannels.get(groupName);
-    groupChannel.messages.push('End of session');
+	let messageObj = {message:'End of session', timestamp:timestamp};
+    groupChannel.messages.push(messageObj);
     groupChannel.isExpired = true;
     global.groupChannels.set(groupName, groupChannel);
     prevSessionTimeout(topic, groupChannel.filterID);
 }
 
-function handleFile(topic, payload){
+function handleFile(topic, payload, timestamp){
     let fileData = Buffer.from(payload[2], 'hex');
 	let groupName = global.activeTopics.get(topic);
 	let fileName = groupName+'_'+payload[1];
@@ -227,7 +232,7 @@ function handleFile(topic, payload){
 		   console.log('Err Handle File err',err);
 		   return;
 	   }
-		let fileMsg = 'File from topic ( ' + topic + ' ): ' + fileName;
+		let fileMsg = {message: 'File from topic ( ' + topic + ' ): ' + fileName, timestamp:timestamp};
 		//update global groupChannels map
 		let groupName = global.activeTopics.get(topic);
 		let groupChannel = global.groupChannels.get(groupName);
@@ -239,7 +244,7 @@ function handleFile(topic, payload){
 	});
 }
 //
-function handleExit(topic, payload){
+function handleExit(topic, payload, timestamp){
     let nodeNo = parseFloat(payload[1]);
 	let groupName = global.activeTopics.get(topic);
 	let groupChannel = global.groupChannels.get(groupName);
@@ -248,10 +253,10 @@ function handleExit(topic, payload){
     });
 	let memberSelect = [memberInfo[0][0]];
 	handleRemoveMember(groupName, memberSelect);
-	groupChannel.messages.push('A member has left the group :'+ memberSelect);
+	let messageObj = {message:'A member has left the group :'+ memberSelect, timestamp:timestamp};
+	groupChannel.messages.push(messageObj);
 	global.groupChannels.set(groupName, groupChannel);
 }
-//TODO: This code is duplicated - sort out cyclic dependencies
 //Handle removal of member from group
 function handleRemoveMember(groupName, memberSelect){
 	let groupChannel = global.groupChannels.get(groupName);

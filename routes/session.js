@@ -113,7 +113,7 @@ router.get('/:name/exit', (req, res) => {
 	let groupChannel = global.groupChannels.get(groupName);
 	let nodeTopic = groupChannel.topics[groupChannel.nodeNo];
 	session.sendExit(groupChannel.topics[0], groupChannel.nodeNo, groupChannel.sessionK, groupChannel.minPow);
-	whisper.handleEnd(nodeTopic);
+	whisper.handleEnd(nodeTopic, new Date().toLocaleString());
 	req.flash('Successfully Exited Session');
 	res.redirect('/session/'+groupName);
 });
@@ -127,7 +127,7 @@ router.get('/:name/end', (req, res) => {
 	//Send END messages to all topics (excluding nodeTopic)
 	session.sendEnd(topics, groupChannel.sessionK, groupChannel.minPow);
 	//Handle End on Group Controller App
-	whisper.handleEnd(nodeTopic);
+	whisper.handleEnd(nodeTopic, new Date().toLocaleString());
 	req.flash('Successfully Ended Session');
 	res.redirect('/session/'+groupName);
 });

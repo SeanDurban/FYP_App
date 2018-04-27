@@ -70,11 +70,14 @@
 
 				<% } %>
 				<h5>Messages Received</h5>
-		<table class="table table-sm table-striped table-bordered">
+		<table class="table table-sm table-striped table-bordered" style="table-layout: fixed;">
 			<tbody>
             <%if(messages && messages.length>0) { %>
             <% for(let message of messages) {%>
-			<tr><td><%=message%></td></tr>
+			<tr>
+				<td style="width: 22%"><%=message.timestamp%></td>
+				<td><%=message.message%></td>
+			</tr>
             <%	}%>
             <% } %>
 			</tbody>
