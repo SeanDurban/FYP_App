@@ -49,7 +49,7 @@ function getFilterMessages(filterID, groupName){
         web3.shh.getFilterMessages(filterID).then((envelopes) => {
             if (envelopes && envelopes.length > 0) {
                 for (let envelope of envelopes) {
-                    console.log('New message received for ', envelope.topic, ' | ', envelope.pow);
+                    console.log('New message received for ', envelope.topic);
                     let payload = web3.utils.hexToAscii(envelope.payload).split('||');
                     let topic = envelope.topic;
                     let timestamp = new Date(envelope.timestamp*1000).toLocaleString(); //Convert unix timestamp to readable string
@@ -339,14 +339,13 @@ function triggerRekey(topic) {
 //Wait set amount seconds then clear session data
 //To ensure all nodes are given reasonable time to REKEY if necessary
 function prevSessionTimeout(topic, messageFilterID, messageTimer){
-    setTimeout(clearSessionData, 12000, topic, messageFilterID);
+    setTimeout(clearSessionData, global.PREV_SESSION_TIMEOUT, topic, messageFilterID);
 }
 //Message timer is cleared, message filter for topic is deleted and activeTopics map updated accordingly
 function clearSessionData(topic, filterID)  {
     let messageTimer = global.messageTimers.get(filterID);
     if(messageTimer) {
         clearTimeout(messageTimer);
-        console.log('Cleared message timer for ', topic);
     }
     web3.shh.deleteMessageFilter(filterID).then(console.log('Deleted filter for topic: ',topic));
     global.activeTopics.delete(topic);

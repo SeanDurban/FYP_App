@@ -7,8 +7,6 @@ const whisper = require('../source/whisper');
 const session = require('../source/session');
 const utils= require('../source/utils');
 
-const INIT_TIMEOUT = 25000;  //25 seconds
-
 router.get('/', function(req, res, next) {
   res.render('index', {messageStorage:global.messageStorage.slice().reverse(), groupChannels:global.groupChannels,
 	  contacts:global.contacts, nodeInfo:global.nodeInfo, err: req.flash('err'),succ: req.flash('succ'), demoAlert:global.demoAlert, demoName:global.demoName});
@@ -53,7 +51,7 @@ router.post('/createGroup', (req,res) => {
 			}
 			let sessionData = {topics: topics, sessionK: sessionK, nodeNo: 0, messages: [], seqNo: 0,
 				memberInfo:memberInfo, filterID:filterID, isExpired:false, minPow:minPow};
-			sessionData.timeout = setTimeout(session.triggerRekey, INIT_TIMEOUT, nodeTopic); //12 seconds
+			sessionData.timeout = setTimeout(session.triggerRekey, global.SESSION_TIMEOUT, nodeTopic); //12 seconds
 			let messageTimer = setTimeout(session.getNewMessages, global.messageTimer, name);
 			global.messageTimers.set(filterID, messageTimer);
 			global.groupChannels.set(name, sessionData);
@@ -64,13 +62,13 @@ router.post('/createGroup', (req,res) => {
 	});
 });
 
+//The following function are used purely to test the PoW slider
 router.post('/spam', (req, res) => {
 	let pubKey = req.body.publicKey;
 	let topic = req.body.topic;
 	sendSpam(topic,pubKey,0);
 	res.redirect('/');
 });
-
 function sendSpam(topic, pubKey, i){
 	whisper.postPublicKey(topic,pubKey,'Spam '+i, 0.2);
 	if(i<4) { //Only send 20 messages every 3.5 seconds

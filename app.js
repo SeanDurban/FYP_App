@@ -28,8 +28,9 @@ global.messageStorage = [];
 global.messageTimers = new Map();
 //App details
 global.nodeWS = 'ws://localhost:'+wsAddresses[args[0]-1];
-global.messageTimer = 2000; //5 secs
-global.SESSION_TIMEOUT = 50000; //50 seconds
+global.messageTimer = 2000; //(2 sec) How regularly filters are polled for new envelopes
+global.SESSION_TIMEOUT = 45000; //(45 sec) Session timeout
+global.PREV_SESSION_TIMEOUT = 15000; //(15 sec) Clear previous Session data timeout
 global.nodeInfo = {};
 
 //For demo

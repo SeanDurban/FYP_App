@@ -149,7 +149,7 @@ function getNewMessages(groupName) {
 //Wait set amount seconds then clear session data
 //To ensure all nodes are given reasonable time to REKEY if necessary
 function prevSessionTimeout(topic, messageFilterID, messageTimer){
-    setTimeout(clearSessionData, 12000, topic, messageFilterID);
+    setTimeout(clearSessionData, global.PREV_SESSION_TIMEOUT, topic, messageFilterID);
 }
 //Message timer is cleared, message filter for topic is deleted and activeTopics map updated accordingly
 function clearSessionData(topic, filterID)  {
