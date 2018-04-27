@@ -5,8 +5,9 @@ var web3 = global.web3;
 const whisper = require('../source/whisper.js');
 const session = require('../source/session.js');
 const utils= require('../source/utils');
+const isLoggedIn = utils.isLoggedIn;
 
-router.get('/:name', function(req, res, next) {
+router.get('/:name', isLoggedIn, function(req, res, next) {
 	let groupName= req.params.name;
 	let groupChannel = global.groupChannels.get(groupName);
 	if(!groupChannel){
@@ -26,7 +27,7 @@ router.get('/:name', function(req, res, next) {
 		groupInfo,isExpired, isGroupController,err: req.flash('err'),succ: req.flash('succ'), demoAlert:global.demoAlert, demoName:global.demoName });
 });
 
-router.post('/:name', (req, res) => {
+router.post('/:name', isLoggedIn, (req, res) => {
 	var inputMessage = req.body.inputMessage;
     let groupName= req.params.name;
     let groupChannel = global.groupChannels.get(groupName);
@@ -42,7 +43,7 @@ router.post('/:name', (req, res) => {
 	});
 });
 
-router.post('/:name/file', (req, res) => {
+router.post('/:name/file', isLoggedIn, (req, res) => {
 	let file = req.files.file;
 	let groupName= req.params.name;
 	let groupChannel = global.groupChannels.get(groupName);
@@ -57,7 +58,7 @@ router.post('/:name/file', (req, res) => {
 	});
 });
 
-router.post('/:name/addMember', (req, res) => {
+router.post('/:name/addMember', isLoggedIn, (req, res) => {
     let groupName= req.params.name;
     let contactsGiven = req.body.contactSelect;
     contactsGiven= (contactsGiven.constructor == Array)? contactsGiven:[contactsGiven];
@@ -94,7 +95,7 @@ router.post('/:name/addMember', (req, res) => {
     res.redirect('/session/'+groupName);
 });
 
-router.post('/:name/removeMember', (req, res) => {
+router.post('/:name/removeMember', isLoggedIn, (req, res) => {
 	let groupName= req.params.name;
 	let groupChannel = global.groupChannels.get(groupName);
     let memberSelect = req.body.memberSelect;
@@ -108,7 +109,7 @@ router.post('/:name/removeMember', (req, res) => {
 	res.redirect('/session/'+groupName);
 });
 
-router.get('/:name/exit', (req, res) => {
+router.get('/:name/exit', isLoggedIn, (req, res) => {
 	let groupName= req.params.name;
 	let groupChannel = global.groupChannels.get(groupName);
 	let nodeTopic = groupChannel.topics[groupChannel.nodeNo];
@@ -118,7 +119,7 @@ router.get('/:name/exit', (req, res) => {
 	res.redirect('/session/'+groupName);
 });
 
-router.get('/:name/end', (req, res) => {
+router.get('/:name/end', isLoggedIn, (req, res) => {
 	let groupName= req.params.name;
 	let groupChannel = global.groupChannels.get(groupName);
 	let nodeTopic = groupChannel.topics[0];

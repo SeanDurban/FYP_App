@@ -13,6 +13,12 @@ function generateSessionData(noMembers, callback) {
 		})
 	});
 }
-
-module.exports = {generateSessionData}
+//Middleware to ensure nodeInfo has been generated
+function isLoggedIn(req, res, next){
+	if(global.nodeInfo && global.nodeInfo.topic && global.nodeInfo.pubKey){
+		return next();
+	}
+	res.redirect('/login');
+}
+module.exports = {generateSessionData, isLoggedIn}
 

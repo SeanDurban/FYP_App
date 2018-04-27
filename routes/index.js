@@ -1,18 +1,18 @@
 var express = require('express');
 var router = express.Router();
-var crypto = require('crypto');
 var web3 = global.web3;
 
 const whisper = require('../source/whisper');
 const session = require('../source/session');
 const utils= require('../source/utils');
+const isLoggedIn = utils.isLoggedIn;
 
-router.get('/', function(req, res, next) {
+router.get('/', isLoggedIn, (req, res) => {
   res.render('index', {messageStorage:global.messageStorage.slice().reverse(), groupChannels:global.groupChannels,
 	  contacts:global.contacts, nodeInfo:global.nodeInfo, err: req.flash('err'),succ: req.flash('succ'), demoAlert:global.demoAlert, demoName:global.demoName});
 });
 
-router.post('/pow', (req,res) => {
+router.post('/pow', isLoggedIn, (req,res) => {
 	web3.shh.setMinPoW(parseFloat(req.body.minPow), (err) =>{
 		if(err){
 			req.flash('err',err);
@@ -24,7 +24,7 @@ router.post('/pow', (req,res) => {
 	});
 });
 
-router.post('/contact', (req, res) => {
+router.post('/contact', isLoggedIn, (req, res) => {
     let name = req.body.name;
     let contactInfo = {topic: req.body.topic, pubKey: req.body.publicKey, minPow:req.body.minPow};
     global.contacts.set(name, contactInfo);
@@ -32,7 +32,7 @@ router.post('/contact', (req, res) => {
     res.redirect('/');
 });
 
-router.post('/createGroup', (req,res) => {
+router.post('/createGroup', isLoggedIn, (req,res) => {
 	let contactsGiven = req.body.contactSelect;
 	contactsGiven = (!contactsGiven)? []:contactsGiven;
 	contactsGiven = (contactsGiven.constructor == Array)? contactsGiven:[contactsGiven];

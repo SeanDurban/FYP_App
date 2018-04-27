@@ -4,7 +4,8 @@ var web3 = global.web3;
 let whisper = require('./whisper');
 const utils= require('./utils');
 
-function appSetup(){
+//Function to assign nodeInfo using newly generated details
+function generateAppDetails(){
     web3.shh.getInfo((err,info) => {
         if(err)
             throw err;
@@ -16,6 +17,21 @@ function appSetup(){
 			whisper.subscribeApp(id, nodeTopic);
         });
     });
+}
+//Function to assign nodeInfo using private key and topic provided
+function addAppDetails(topic, privateKey){
+	web3.shh.getInfo((err,info) => {
+		if(err)
+			throw err;
+		web3.shh.addPrivateKey(privateKey, (err2, id) => {
+			web3.shh.getPublicKey(id, (err3, pubKey) => {
+				var contactInfo = {topic: topic, pubKey:pubKey };
+				global.contacts.set('Me', contactInfo);
+				global.nodeInfo = {minPow:info.minPow, pubKey:pubKey, topic:topic, keyID:id};
+				whisper.subscribeApp(id, topic);
+			});
+		});
+	});
 }
 //Generate new key pair for app
 //In real scenario ideally users could import their own or generate a pair
@@ -163,4 +179,4 @@ function clearSessionData(topic, filterID)  {
 }
 
 module.exports = {getNewKeys, sendInit, sendRekey, sendEnd, sendExit, triggerRekey,
-    prevSessionTimeout, handleRemoveMember, getNewMessages, appSetup};
+    prevSessionTimeout, handleRemoveMember, getNewMessages, generateAppDetails, addAppDetails};
