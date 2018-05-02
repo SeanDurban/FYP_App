@@ -24,20 +24,20 @@ router.get('/:name', isLoggedIn, function(req, res, next) {
     let groupInfo = {size:groupChannel.topics.length, noMessages:groupChannel.messages.length, minPow:groupChannel.minPow,
 		currentTopic:groupChannel.topics[groupChannel.nodeNo]};
   	res.render('session',{name: groupName, messages:groupChannel.messages.slice().reverse(), groupMembers, contacts,
-		groupInfo,isExpired, isGroupController,err: req.flash('err'),succ: req.flash('succ'), demoAlert:global.demoAlert, demoName:global.demoName });
+		groupInfo,isExpired, isGroupController,err: req.flash('err'),succ: req.flash('succ')});
 });
 
+//Handle message POST
 router.post('/:name', isLoggedIn, (req, res) => {
-	var inputMessage = req.body.inputMessage;
+	 	let inputMessage = req.body.inputMessage;
     let groupName= req.params.name;
     let groupChannel = global.groupChannels.get(groupName);
     let sessionK = groupChannel.sessionK;
     web3.shh.addSymKey(sessionK, (err, id) => {
     	for(let topic of groupChannel.topics) {
-    		let message = groupChannel.seqNo + '||' + inputMessage;
+    				let message = inputMessage;
             whisper.post(topic, id, message, groupChannel.minPow);
         }
-        groupChannel.seqNo++;
         global.groupChannels.set(groupName,groupChannel);
 		res.redirect('/session/'+groupName);
 	});
@@ -52,7 +52,6 @@ router.post('/:name/file', isLoggedIn, (req, res) => {
 		for(let topic of groupChannel.topics) {
 			whisper.postFile(topic, id, file, groupChannel.minPow);
 		}
-		groupChannel.seqNo++;
 		global.groupChannels.set(groupName,groupChannel);
 		res.redirect('/session/'+groupName);
 	});

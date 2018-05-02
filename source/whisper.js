@@ -159,7 +159,7 @@ function setupSession(message){
     let sessionTopic = topics[nodeNo];
     createFilter(sessionTopic, sessionK, minPow, (filterID) => {
         let sessionData = {topics: topics, sessionK: sessionK, nodeNo: nodeNo, messages: [], name: groupName,
-            seqNo: 0, filterID:filterID, isExpired:false, minPow:minPow};
+            filterID:filterID, isExpired:false, minPow:minPow};
         let messageTimer = setTimeout(getFilterMessages, global.messageTimer, filterID, groupName);
         global.messageTimers.set(filterID, messageTimer);
         global.groupChannels.set(groupName, sessionData);
@@ -169,15 +169,13 @@ function setupSession(message){
 //Handle group member message
 //Extracts message and updates group channel map
 function handleMessage(topic, payload, timestamp) {
-    let seqNo = payload[0];
-    let message = payload[1];
+    let message = payload[0];
     //update global groupChannels map
     let groupName = global.activeTopics.get(topic);
     let groupChannel = global.groupChannels.get(groupName);
     if (groupChannel) {
     	let messageObj = {message:message, timestamp:timestamp};
         groupChannel.messages.push(messageObj);
-        groupChannel.seqNo++;
         global.groupChannels.set(groupName, groupChannel);
     }
 }
@@ -238,7 +236,6 @@ function handleFile(topic, payload, timestamp){
 		let groupChannel = global.groupChannels.get(groupName);
 		if (groupChannel) {
 			groupChannel.messages.push(fileMsg);
-			groupChannel.seqNo++;
 			global.groupChannels.set(groupName, groupChannel);
 		}
 	});

@@ -9,9 +9,10 @@ const isLoggedIn = utils.isLoggedIn;
 
 router.get('/', isLoggedIn, (req, res) => {
   res.render('index', {messageStorage:global.messageStorage.slice().reverse(), groupChannels:global.groupChannels,
-	  contacts:global.contacts, nodeInfo:global.nodeInfo, err: req.flash('err'),succ: req.flash('succ'), demoAlert:global.demoAlert, demoName:global.demoName});
+	  contacts:global.contacts, nodeInfo:global.nodeInfo, err: req.flash('err'),succ: req.flash('succ')});
 });
 
+//Handle PoW slider changer
 router.post('/pow', isLoggedIn, (req,res) => {
 	web3.shh.setMinPoW(parseFloat(req.body.minPow), (err) =>{
 		if(err){
@@ -24,14 +25,16 @@ router.post('/pow', isLoggedIn, (req,res) => {
 	});
 });
 
+//Handle Add Contact POST
 router.post('/contact', isLoggedIn, (req, res) => {
     let name = req.body.name;
     let contactInfo = {topic: req.body.topic, pubKey: req.body.publicKey, minPow:req.body.minPow};
     global.contacts.set(name, contactInfo);
-	console.log('Added contact ',name);
+		req.flash('succ', 'Succesfully Added contact '+name);
     res.redirect('/');
 });
 
+//Handle Create Group POST
 router.post('/createGroup', isLoggedIn, (req,res) => {
 	let contactsGiven = req.body.contactSelect;
 	contactsGiven = (!contactsGiven)? []:contactsGiven;
@@ -49,29 +52,30 @@ router.post('/createGroup', isLoggedIn, (req,res) => {
 			for(let nodeNo =0 ; nodeNo<contactsGiven.length; nodeNo++){
 				memberInfo[contactsGiven[nodeNo]] = nodeNo+1;
 			}
-			let sessionData = {topics: topics, sessionK: sessionK, nodeNo: 0, messages: [], seqNo: 0,
+			let sessionData = {topics: topics, sessionK: sessionK, nodeNo: 0, messages: [],
 				memberInfo:memberInfo, filterID:filterID, isExpired:false, minPow:minPow};
 			sessionData.timeout = setTimeout(session.triggerRekey, global.SESSION_TIMEOUT, nodeTopic); //12 seconds
 			let messageTimer = setTimeout(session.getNewMessages, global.messageTimer, name);
 			global.messageTimers.set(filterID, messageTimer);
 			global.groupChannels.set(name, sessionData);
 			global.activeTopics.set(nodeTopic, name);
-			console.log('Created new Group', name);
+			req.flash('succ', 'Succesfully created new group'+name);
 			res.redirect('/');
 		});
 	});
 });
 
-//The following function are used purely to test the PoW slider
+//Handle send spam POST
 router.post('/spam', (req, res) => {
 	let pubKey = req.body.publicKey;
 	let topic = req.body.topic;
 	sendSpam(topic,pubKey,0);
 	res.redirect('/');
 });
+//Send spam messages with PoW value (0.2) to showcase spam prevention
 function sendSpam(topic, pubKey, i){
 	whisper.postPublicKey(topic,pubKey,'Spam '+i, 0.2);
-	if(i<4) { //Only send 20 messages every 3.5 seconds
+	if(i<4) { //Only send 4 messages every 3
 		setTimeout(sendSpam, 3000, topic, pubKey, i + 1);
 	} else {
 		console.log('End Spam');

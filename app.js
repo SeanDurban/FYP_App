@@ -33,11 +33,6 @@ global.SESSION_TIMEOUT = 45000; //(45 sec) Session timeout
 global.PREV_SESSION_TIMEOUT = 15000; //(15 sec) Clear previous Session data timeout
 global.nodeInfo = {};
 
-//For demo
-let alerts = ['success', 'danger', 'primary','primary','primary'];
-let names = ['Charlie', 'Alice', 'Bob', 'Node4', 'Node5'];
-global.demoName = names[args[0]-1];
-global.demoAlert = 'alert alert-'+alerts[args[0]-1];
 
 if(args[0] == '1') {
   global.web3 = new Web3(new Web3.providers.IpcProvider('\\\\.\\pipe\\geth.ipc', net));
@@ -93,6 +88,5 @@ var httpServer = http.createServer(app);
 httpServer.listen(4000+(args[0]-1), function() {
   console.log("Server listening on port 400"+(args[0]-1));
 });
-
 
 module.exports = app;
