@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 var web3 = global.web3;
 
-//Returns noMembers Topics and a SessionKey
+//Returns noMembers amount of Topics and a SessionKey
 function generateSessionData(noMembers, callback) {
 	web3.shh.newSymKey((err,id) => {
 		web3.shh.getSymKey(id,(err2, key) => {
@@ -14,6 +14,7 @@ function generateSessionData(noMembers, callback) {
 	});
 }
 //Middleware to ensure nodeInfo has been generated
+//i.e is logged into a base identity
 function isLoggedIn(req, res, next){
 	if(global.nodeInfo && global.nodeInfo.topic && global.nodeInfo.pubKey){
 		return next();
@@ -21,4 +22,3 @@ function isLoggedIn(req, res, next){
 	res.redirect('/login');
 }
 module.exports = {generateSessionData, isLoggedIn}
-

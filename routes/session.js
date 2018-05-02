@@ -42,7 +42,7 @@ router.post('/:name', isLoggedIn, (req, res) => {
 		res.redirect('/session/'+groupName);
 	});
 });
-
+//Handle File post
 router.post('/:name/file', isLoggedIn, (req, res) => {
 	let file = req.files.file;
 	let groupName= req.params.name;
@@ -56,7 +56,7 @@ router.post('/:name/file', isLoggedIn, (req, res) => {
 		res.redirect('/session/'+groupName);
 	});
 });
-
+//Handle add group member POST
 router.post('/:name/addMember', isLoggedIn, (req, res) => {
     let groupName= req.params.name;
     let contactsGiven = req.body.contactSelect;
@@ -93,7 +93,7 @@ router.post('/:name/addMember', isLoggedIn, (req, res) => {
     });
     res.redirect('/session/'+groupName);
 });
-
+//Handle group member removal
 router.post('/:name/removeMember', isLoggedIn, (req, res) => {
 	let groupName= req.params.name;
 	let groupChannel = global.groupChannels.get(groupName);
@@ -108,6 +108,7 @@ router.post('/:name/removeMember', isLoggedIn, (req, res) => {
 	res.redirect('/session/'+groupName);
 });
 
+//Handle group member exit
 router.get('/:name/exit', isLoggedIn, (req, res) => {
 	let groupName= req.params.name;
 	let groupChannel = global.groupChannels.get(groupName);
@@ -118,6 +119,7 @@ router.get('/:name/exit', isLoggedIn, (req, res) => {
 	res.redirect('/session/'+groupName);
 });
 
+//Handle group controller end channel
 router.get('/:name/end', isLoggedIn, (req, res) => {
 	let groupName= req.params.name;
 	let groupChannel = global.groupChannels.get(groupName);

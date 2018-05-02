@@ -79,8 +79,6 @@ function getFilterMessages(filterID, groupName){
 //Assumes message in ASCII format
 function post(topic, keyID, message, powTarget) {
 	powTarget = Math.max(parseFloat(powTarget), parseFloat(global.nodeInfo.minPow));
-    //For time testing of PoW
-	//console.time('message'+topic);
     web3.shh.post(
         {
             symKeyID: keyID, // encrypts using the sym key ID
@@ -90,7 +88,6 @@ function post(topic, keyID, message, powTarget) {
             powTime: 12,
             powTarget: parseFloat(powTarget)
         }, (err, res) => {
-           // console.timeEnd('message'+topic);
             if (err) {
                 console.log('err post: ', err);
             } else{
@@ -103,10 +100,9 @@ function post(topic, keyID, message, powTarget) {
 //Files limited to 10mb by underlying DEVp2p transport
 function postFile(topic, keyID, file, powTarget) {
 	let fileData= file.data.toString('hex');
-    let message = 'FILE||'+file.name+'||'+fileData;
-    message = web3.utils.toHex(message);
+  let message = 'FILE||'+file.name+'||'+fileData;
+  message = web3.utils.toHex(message);
 	powTarget = Math.max(parseFloat(powTarget), parseFloat(global.nodeInfo.minPow));
-	//console.time('file'+topic);
 	web3.shh.post(
         {
             symKeyID: keyID, // encrypts using the sym key ID
@@ -116,8 +112,6 @@ function postFile(topic, keyID, file, powTarget) {
             powTime: 70,
             powTarget: parseFloat(powTarget)
         }, (err2, res) => {
-        	//For time testing
-           // console.timeEnd('file'+topic);
             if (err2) {
                 console.log('err postFile: ', err2);
             } else{
@@ -218,7 +212,9 @@ function handleEnd(topic, timestamp){
     global.groupChannels.set(groupName, groupChannel);
     prevSessionTimeout(topic, groupChannel.filterID);
 }
-
+//Handle FILE message received
+//Files are saved in the data folder
+//File name is groupName_fileName
 function handleFile(topic, payload, timestamp){
     let fileData = Buffer.from(payload[2], 'hex');
 	let groupName = global.activeTopics.get(topic);
@@ -240,7 +236,9 @@ function handleFile(topic, payload, timestamp){
 		}
 	});
 }
-//
+//Handle EXIT message received
+//Group controller must remove group member wishing to leave
+//Following initiate REKEY
 function handleExit(topic, payload, timestamp){
     let nodeNo = parseFloat(payload[1]);
 	let groupName = global.activeTopics.get(topic);
@@ -254,7 +252,9 @@ function handleExit(topic, payload, timestamp){
 	groupChannel.messages.push(messageObj);
 	global.groupChannels.set(groupName, groupChannel);
 }
+
 //Handle removal of member from group
+//Initiate REKEY
 function handleRemoveMember(groupName, memberSelect){
 	let groupChannel = global.groupChannels.get(groupName);
 	let oldFilterID = groupChannel.filterID;
