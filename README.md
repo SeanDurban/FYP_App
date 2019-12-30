@@ -2,7 +2,7 @@
 An Anonymous Decentalised Messaging Application utilising the Whisper Protocol
 
 ## Report 
-The full project report is included as a PDF called 'FYP-Report'. This was written as part of a Final Year Project of my Bachelor's degree. 
+The full project report is included as a PDF called 'Project Report'. This was written as part of a Final Year Project for my Bachelor's degree.
 
 ## Abstract
 With the current extent of surveillance it's difficult to guarantee any form of digital communication will remain private. Furthermore current messaging applications may offer end-to-end encryption, which provides assurances to the message content being secure, but fail to preserve a user's anonymity. They leak compromising information about the sender, recipients and the message itself from metadata. Centralised applications require a certain level of trust since servers handle the messages, this can present risks for both service and user. Ultimately a potential user should not have to choose a messaging application based on the application or company they trust the most and should have the ability to remain anonymous.
